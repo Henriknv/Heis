@@ -22,13 +22,18 @@ func master_or_slave(Broadcast_addr *net.UDPAddr) int {
 
 		client = 1
 		fmt.Println("I am master.")
+		Udp_send()
 
 	} else {
 
 		client = -1
 		fmt.Println("I am slave.")
+		Udp_receive()
 
 	}
+
+	defer conn.Close()
+
 	return client
 }
 

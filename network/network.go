@@ -47,6 +47,43 @@ func get_local_addr(local_listen_port int) (err error) {
 
 }
 
+func Udp_receive() {
+
+	conn, _ := net.ListenUDP("udp", Broadcast_addr)
+
+	defer conn.Close()
+
+	buf := make([]byte, 1024)
+
+	for {
+
+		time.Sleep(100 * time.Millisecond)
+		n, _, _ := conn.ReadFromUDP(buf)
+		fmt.Println("Received:", string(buf[0:n]))
+
+	}
+}
+
+func Udp_send() {
+
+	conn, _ := net.DialUDP("udp", Local_addr, Broadcast_addr)
+
+	defer conn.Close()
+
+	i := 0
+
+	for {
+
+		time.Sleep(100 * time.Millisecond)
+		msg := strconv.Itoa(i)
+		i++
+		buf := []byte(msg)
+		conn.Write(buf)
+
+	}
+
+}
+
 func Udp_init(local_listen_port int, broadcast_listen_port int) { //int message_size, send_ch, receive_ch, chan udp_message
 
 	//Setting up broadcast address:
