@@ -14,31 +14,47 @@ func master_or_slave(Broadcast_addr *net.UDPAddr) int {
 
 	client := 0
 
+	// i = 0 -> Client = Master
+	// i != 0 -> Client = Slave
+
 	buf := make([]byte, 64)
 
-	_, _, err := conn.ReadFromUDP(buf)
+	i, _, _ := conn.ReadFromUDP(buf)
 
-	if err != nil {
+	defer conn.Close()
+
+	if i == 0 {
 
 		client = 1
 		fmt.Println("I am master.")
-		Udp_send()
 
 	} else {
 
 		client = -1
 		fmt.Println("I am slave.")
-		Udp_receive()
 
 	}
-
-	defer conn.Close()
 
 	return client
 }
 
+func master() {
+
+}
+
+func slave() {
+	Udp_receive()
+}
+
 func Elev_init() {
 
-	master_or_slave(Broadcast_addr)
+	client := master_or_slave(Broadcast_addr)
+
+	switch client {
+	case -1:
+		slave()
+	case 1:
+		master()
+	}
 
 }

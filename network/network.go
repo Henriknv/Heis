@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"time"
+	."encoding/json"
 )
 
 var Local_addr *net.UDPAddr
@@ -12,10 +14,12 @@ var Broadcast_addr *net.UDPAddr
 var broadcast_listen_port int
 var local_listen_port int
 
-// type udp_message struct{
-// 	string receive_addr
-// 	int length
-// }
+// NEXT TIME: LAGE NY STRUCT, SOM ER BRUKANDES.
+
+type Order struct {
+	
+	Text := "Heyo"
+}
 
 func get_broadcast_addr(broadcast_listen_port int) (err error) {
 
@@ -47,48 +51,44 @@ func get_local_addr(local_listen_port int) (err error) {
 
 }
 
-func Udp_receive() {
+//TODO NESTE GANG: LAGE NYE SEND & RECEIVE FUNKSJONER. CHAN FOR SEND & RECV.
 
-	conn, _ := net.ListenUDP("udp", Broadcast_addr)
+/*func Udp_receive(struct chan receive_chan) {
 
-	defer conn.Close()
+conn, _ := net.ListenUDP("udp", Broadcast_addr)
 
-	buf := make([]byte, 1024)
+defer conn.Close()
 
-	for {
 
-		time.Sleep(100 * time.Millisecond)
-		n, _, _ := conn.ReadFromUDP(buf)
-		fmt.Println("Received:", string(buf[0:n]))
 
-	}
-}
+for   {
 
-func Udp_send() {
+time.Sleep(100 * time.Millisecond)
+n, _, _ := conn.ReadFromUDP(buf)
+fmt.Println("Received:", string(buf[0:n]))
 
-	conn, _ := net.DialUDP("udp", Local_addr, Broadcast_addr)
-
-	defer conn.Close()
-
-	i := 0
-
-	for {
-
-		time.Sleep(100 * time.Millisecond)
-		msg := strconv.Itoa(i)
-		i++
-		buf := []byte(msg)
-		conn.Write(buf)
-
-	}
 
 }
+buf := Unmarshal()
+}
+
+func Udp_send(struct chan send_chan) {
+
+conn, _ := net.DialUDP("udp", Local_addr, Broadcast_addr)
+
+defer conn.Close()
+
+buf := jsoMarshal(message)
+
+conn.Write(buf)
+
+}*/
 
 func Udp_init(local_listen_port int, broadcast_listen_port int) { //int message_size, send_ch, receive_ch, chan udp_message
 
-	//Setting up broadcast address:
 
-	get_broadcast_addr(broadcast_listen_port)
-	get_local_addr(local_listen_port)
+
+	get_broadcast_addr(broadcast_listen_port)	// Setting up broadcast address.
+	get_local_addr(local_listen_port)		// Setting up local address.
 
 }
