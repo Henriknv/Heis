@@ -3,58 +3,42 @@ package elev
 import . ".././network"
 import (
 	"fmt"
-	"net"
-	"time"
+	//"net"
+	. "time"
 )
 
-func master_or_slave(Broadcast_addr *net.UDPAddr) int {
+func master_or_slave() bool {
 
-	conn, _ := net.ListenUDP("udp", Broadcast_addr)
-	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	var buf Msg_struct
+	_ = buf
 
-	client := 0
+	var is_master bool
 
-	// i = 0 -> Client = Master
-	// i != 0 -> Client = Slave
+	select {
 
-	buf := make([]byte, 64)
+	case <-After(1 * Second):
+		is_master = true
 
-	i, _, _ := conn.ReadFromUDP(buf)
+	case buf = <-Send_chan:
+		is_master = false
 
-	defer conn.Close()
+	}
 
-	if i == 0 {
+	if is_master {
 
-		client = 1
 		fmt.Println("I am master.")
 
 	} else {
 
-		client = -1
 		fmt.Println("I am slave.")
 
 	}
 
-	return client
-}
-
-func master() {
-
-}
-
-func slave() {
-	//Udp_receive()
+	return is_master
 }
 
 func Elev_init() {
 
-	client := master_or_slave(Broadcast_addr)
-
-	switch client {
-	case -1:
-		slave()
-	case 1:
-		master()
-	}
+	is_master := master_or_slave()
 
 }
