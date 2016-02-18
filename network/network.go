@@ -1,12 +1,14 @@
 package network
 
 import (
+	. "encoding/json"
 	"fmt"
 	"net"
 	"strconv"
 	"time"
-	."encoding/json"
 )
+
+// Ports and addresses for send/receive:
 
 var Local_addr *net.UDPAddr
 var Broadcast_addr *net.UDPAddr
@@ -14,12 +16,13 @@ var Broadcast_addr *net.UDPAddr
 var broadcast_listen_port int
 var local_listen_port int
 
-// NEXT TIME: LAGE NY STRUCT, SOM ER BRUKANDES.
+// Struct and channels for send/receive functions.
 
-type Order struct {
-	
-	Text := "Heyo"
+type msg_struct struct {
+	Text string
 }
+
+// Functions for aquiring broadcast and local addresses:
 
 func get_broadcast_addr(broadcast_listen_port int) (err error) {
 
@@ -51,44 +54,69 @@ func get_local_addr(local_listen_port int) (err error) {
 
 }
 
-//TODO NESTE GANG: LAGE NYE SEND & RECEIVE FUNKSJONER. CHAN FOR SEND & RECV.
+// Functions to send/receive a message via UDP:
 
-/*func Udp_receive(struct chan receive_chan) {
+func Udp_receive(Receieve_chan chan msg_struct) {
 
-conn, _ := net.ListenUDP("udp", Broadcast_addr)
+	var message msg_struct
 
-defer conn.Close()
+	for {
 
+		buf := make([]byte, 1024)
 
+		conn, _ := net.ListenUDP("udp", Broadcast_addr)
 
-for   {
+		time.Sleep(100 * time.Millisecond)
 
-time.Sleep(100 * time.Millisecond)
-n, _, _ := conn.ReadFromUDP(buf)
-fmt.Println("Received:", string(buf[0:n]))
+		n, _, _ := conn.ReadFromUDP(buf)
 
+		Unmarshal(buf[:n], &message)
+		fmt.Println(message)
 
+		Receieve_chan <- message
+
+		conn.Close()
+	}
 }
-buf := Unmarshal()
+
+func Udp_send(Send_chan chan msg_struct) {
+
+	//var message msg_struct
+
+	for {
+
+		conn, _ := net.DialUDP("udp", Local_addr, Broadcast_addr)
+
+		message := <-Send_chan
+
+		buf, _ := Marshal(message)
+		fmt.Println(buf)
+
+		conn.Write(buf)
+
+		conn.Close()
+	}
 }
-
-func Udp_send(struct chan send_chan) {
-
-conn, _ := net.DialUDP("udp", Local_addr, Broadcast_addr)
-
-defer conn.Close()
-
-buf := jsoMarshal(message)
-
-conn.Write(buf)
-
-}*/
 
 func Udp_init(local_listen_port int, broadcast_listen_port int) { //int message_size, send_ch, receive_ch, chan udp_message
 
+	get_broadcast_addr(broadcast_listen_port) // Setting up broadcast address.
+	get_local_addr(local_listen_port)         // Setting up local address.
 
+	Send_chan := make(chan msg_struct)
+	Receive_chan := make(chan msg_struct)
 
-	get_broadcast_addr(broadcast_listen_port)	// Setting up broadcast address.
-	get_local_addr(local_listen_port)		// Setting up local address.
+	go Udp_send(Send_chan)
+	go Udp_receive(Receive_chan)
+
+	One_test := msg_struct{Text: "Halla"}
+
+	Send_chan <- One_test
+
+	//var two_test msg_struct
+
+	Two_test := <-Receive_chan
+
+	fmt.Println(Two_test.Text)
 
 }

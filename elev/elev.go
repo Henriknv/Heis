@@ -43,7 +43,7 @@ func master() {
 }
 
 func slave() {
-	Udp_receive()
+	//Udp_receive()
 }
 
 func Elev_init() {

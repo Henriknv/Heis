@@ -1,7 +1,8 @@
 package main
 
 import . "./network"
-import . "./elev"
+
+//import . "./elev"
 
 func main() {
 
@@ -9,6 +10,8 @@ func main() {
 	local_listen_port := 20020
 
 	Udp_init(local_listen_port, broadcast_listen_port)
-	Elev_init()
+	//Elev_init()
+	for {
 
+	}
 }
