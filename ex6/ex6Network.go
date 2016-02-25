@@ -1,9 +1,14 @@
-package network
+package ex6
 
 import (
+	. "encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"os"
+	"os/exec"
 	"strconv"
+	"time"
 )
 
 var Local_addr *net.UDPAddr
@@ -11,8 +16,6 @@ var Broadcast_addr *net.UDPAddr
 
 var broadcast_listen_port int
 var local_listen_port int
-
-
 
 // type udp_message struct{
 // 	string receive_addr
@@ -65,13 +68,14 @@ func Udp_receive() {
 
 	// }
 
-
+	//fmt.Println("shait")
+	conn, _ := net.ListenUDP("udp", Broadcast_addr)
 	for {
+		//fmt.Println("shait2")
 
-		conn, _ := net.ListenUDP("udp", Broadcast_addr)
-		conn.SetReadDeadline(time.Now().Add(2 * time.Second))
-
-		client := 0
+		conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+		//fmt.Println("shait3")
+		//client := 0
 
 		buf := make([]byte, 64)
 
@@ -79,56 +83,55 @@ func Udp_receive() {
 
 		if err != nil {
 
-			client = 1
+			//client = 1
 			fmt.Println("I am master.")
-			conn.Close();
+			conn.Close()
 			Udp_send()
 
 		} else {
 
-			
 			fmt.Println("Mottatt")
-			
+			//time.Sleep(3000 * time.Millisecond)
 
 		}
+
+		//fmt.Println("Ha!")
+		//time.Sleep(3000 * time.Millisecond)
 	}
 
+	//fmt.Println("Aha!")
+	//time.Sleep(3000 * time.Millisecond)
 }
 
 func Udp_send() {
 
-	//c := exec.Command("gnome-terminal", "-x", "sh", "-c", "go run main.go")
-	//c.Run()
-
+	c := exec.Command("gnome-terminal", "-x", "sh", "-c", "go run main.go")
+	c.Run()
 
 	conn, _ := net.DialUDP("udp", Local_addr, Broadcast_addr)
 
 	defer conn.Close()
 
-
-	if _, err := os.Stat("backup.txt"); os.IsNotExist(err){
-			os.Create("backup.txt")
-			temp := 0				
-			n, _ := Marshal(temp)
-			ioutil.WriteFile("backup.txt", n, 0644)
-		}
-	
+	if _, err := os.Stat("backup.txt"); os.IsNotExist(err) {
+		os.Create("backup.txt")
+		temp := 0
+		n, _ := Marshal(temp)
+		ioutil.WriteFile("backup.txt", n, 0644)
+	}
 
 	for {
 
 		time.Sleep(200 * time.Millisecond)
 		msg := "Alive"
-		
-		f,_ := ioutil.ReadFile("backup.txt")
-			var b int
-			Unmarshal(f,&b)
-			counter := b
-			Println(counter)
-			counter++
-			n, _ := Marshal(counter)
-			ioutil.WriteFile("backup.txt", n, 0644)
 
-
+		f, _ := ioutil.ReadFile("backup.txt")
+		var b int
+		Unmarshal(f, &b)
+		counter := b
+		fmt.Println(counter)
+		counter++
+		n, _ := Marshal(counter)
+		ioutil.WriteFile("backup.txt", n, 0644)
 
 		buf := []byte(msg)
 		conn.Write(buf)

@@ -1,6 +1,6 @@
-package elev
+package ex6
 
-import . ".././network"
+//import . "ex6Network"
 import (
 	"fmt"
 	"net"
@@ -22,14 +22,14 @@ func master_or_slave(Broadcast_addr *net.UDPAddr) int {
 
 		client = 1
 		fmt.Println("I am master.")
-		conn.Close();
+		conn.Close()
 		Udp_send()
 
 	} else {
 
 		client = -1
 		fmt.Println("I am slave.")
-		conn.CLose();
+		conn.Close()
 		Udp_receive()
 
 	}

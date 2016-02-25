@@ -1,8 +1,6 @@
 package main
 
-import . "./network"
-
-import . "./elev"
+import . "./ex6"
 
 func main() {
 
