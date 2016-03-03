@@ -1,9 +1,10 @@
 package elev
 
 import . ".././network"
+import . ".././drivers"
 import (
 	"fmt"
-	//"net"
+	//"./net"
 	. "time"
 )
 
@@ -39,6 +40,13 @@ func master_or_slave() bool {
 
 func Elev_init() {
 
+	elev_init()
 	is_master := master_or_slave()
+
+	elev_set_motor_direction(-1)
+	if elev_get_floor_sensor_signal() {
+		elev_set_motor_direction(0)
+		elev_set_floor_indicator(elev_get_floor_sensor_signal())
+	}
 
 }

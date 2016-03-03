@@ -1,8 +1,7 @@
-#pragma once
-
+package drivers
 
 //in port 4
-PORT_4_SUBDEVICE = 3
+PORT_4_SUBDEVICE := 3
 PORT_4_CHANNEL_OFFSET = 16
 OBSTRUCTION = (0x300+23)
 STOP = (0x300+22)

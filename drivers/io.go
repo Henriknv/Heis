@@ -1,4 +1,4 @@
-package Drivers // where "driver" is the folder that contains io.go, io.c, io.h, channels.go, channels.h and driver.go
+package drivers // where "driver" is the folder that contains io.go, io.c, io.h, channels.go, channels.h and driver.go
 /*
 #cgo CFLAGS: -std=c11
 #cgo LDFLAGS: -lcomedi -lm
@@ -30,23 +30,23 @@ func elev_init() {
 	C.elev_init()
 }
 
-func elev_set_motor_direction(elev_motor_direction_t dirn){
-	C.elev_set_motor_direction(elev_motor_direction_t dirn)
+func elev_set_motor_direction(elev_motor_direction_t dirn) {
+	C.elev_set_motor_direction(C.elev_motor_direction_t(dirn))
 }
 
-func elev_set_button_lamp(elev_button_type_t button, int floor, int value){
+func elev_set_button_lamp(elev_button_type_t button, int floor, int value) {
 	C.elev_set_button_lamp(C.elev_button_type_t(button), C.int(floor), C.int(value))
 }
 
-func elev_set_floor_indicator(int floor){
+func elev_set_floor_indicator(int floor) {
 	C.elev_set_floor_indicator(C.int(floor))
 }
 
-func elev_set_door_open_lamp(int value){
+func elev_set_door_open_lamp(int value) {
 	C.elev_set_door_open_lamp(C.int(value))
 }
 
-func elev_set_stop_lamp(int value){
+func elev_set_stop_lamp(int value) {
 	C.elev_set_stop_lamp(C.int(value))
 }
 
@@ -65,4 +65,3 @@ func elev_get_stop_signal() int {
 func elev_get_obstruction_signal() int {
 	return int(C.elev_get_obstruction_signal())
 }
-
