@@ -9,7 +9,19 @@ func main() {
 	local_listen_port := 20020
 
 	Udp_init(local_listen_port, broadcast_listen_port)
-	Elev_init()
+	Elevator_init()
+	//is_master := Master_or_slave()
+	/*
+		Execute_order(1)
+		Execute_order(3)
+		Execute_order(1)
+		Execute_order(2)*/
+
+	go Elev_maintenance()
+
+	Execute_order(0)
+	Execute_order(3)
+	Execute_order(0)
 
 	for {
 
