@@ -114,20 +114,4 @@ func Udp_init(local_listen_port int, broadcast_listen_port int) {
 	go Udp_send(Send_chan)
 	go Udp_receive(Receive_chan)
 
-	/*One_test := msg_struct{Text: "Halla"}
-
-	Send_chan <- One_test
-
-	Two_test := <-Receive_chan
-
-	fmt.Println(Two_test.Text)*/
-
-	//One_test := msg_struct{Text: "Halla"}
-
-	/*for {
-
-		Send_chan <- One_test
-
-	}*/
-
 }

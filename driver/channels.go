@@ -1,6 +1,7 @@
 package driver
 
 const (
+
 	//in port 4
 	PORT_4_SUBDEVICE      = 3
 	PORT_4_CHANNEL_OFFSET = 16

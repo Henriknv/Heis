@@ -9,13 +9,11 @@ import (
 	. "time"
 )
 
-/*const (
-	FLOOR_1 = 0
-	FLOOR_2 = 1
-	FLOOR_3 = 2
-	FLOOR_4 = 3
-	LIMBO   = -1
-)*/
+const INTERNAL_BUTTONS int = 2
+const N_FLOORS int = 4
+const EXT_DOWN_BUTTONS int = 1
+const EXT_UP_BUTTONS int = 0
+const EXT_BUTTONS = N_FLOORS * 2
 
 var Floor_sensor_chan = make(chan int)
 
@@ -67,9 +65,11 @@ func Elevator_init() {
 
 func Elev_maintenance() {
 
-	var current_floor int
+	current_floor := Elev_get_floor_sensor_signal()
 
-	last_floor := Elev_get_floor_sensor_signal()
+	last_floor := current_floor
+
+	Floor_sensor_chan <- current_floor
 
 	for {
 
@@ -79,8 +79,14 @@ func Elev_maintenance() {
 
 		if !(last_floor == current_floor) {
 
-			Floor_sensor_chan <- current_floor
-			last_floor = current_floor
+				last_floor = current_floor
+
+		}
+
+		select {
+
+		case Floor_sensor_chan <- current_floor:
+		default:
 
 		}
 	}
@@ -93,15 +99,10 @@ func Execute_order(target_floor int) {
 	current_floor = <-Floor_sensor_chan
 	elev_dir := 0
 
-	Println("Target floor:", target_floor)
-
 	for !(current_floor == target_floor) {
 
-		current_floor = <-Floor_sensor_chan
-		Sleep(200 * Millisecond)
-
-		Println("Current floor:", current_floor)
-		Println("Elevator direction:", elev_dir)
+		//Println("Current floor:", current_floor)
+		//Println("Elevator direction:", elev_dir)
 
 		if current_floor < target_floor && !(current_floor == -1) {
 
@@ -115,22 +116,92 @@ func Execute_order(target_floor int) {
 
 		}
 
+		current_floor = <-Floor_sensor_chan
+
 	}
 
 	Elev_set_motor_direction(-elev_dir)
-	Sleep(5 * Millisecond)
+	Sleep(10 * Millisecond)
 
 	elev_dir = 0
 	Elev_set_motor_direction(elev_dir)
 
-	Println("Order has been executed.")
+}
+
+var internal_orders [N_FLOORS]int
+var external_orders [EXT_BUTTONS]int
+
+func Get_internal_orders(){
+
+	for i := 0; i < N_FLOORS; i++{
+			
+		if Elev_get_button_signal(INTERNAL_BUTTONS, i){
+
+			internal_orders[i] = 1
+
+		}
+	}
+
+	Sleep(100 * Millisecond)
+
+	Println(internal_orders)
 
 }
 
-/*
-	if !current_floor == -1 {
+func Get_external_orders(){
 
-		Elev_set_floor_indicator(current_floor)
+	for i := 0; i<N_FLOORS; i++{
 
+		if Elev_get_button_signal(EXT_UP_BUTTONS, i){
+
+		external_orders[i] = 1
+
+		}
+
+		if Elev_get_button_signal(EXT_DOWN_BUTTONS, i){
+
+		external_orders[i+N_FLOORS] = 1
+
+		}		
 	}
-*/
+}
+
+func Get_orders(){
+	for{
+		Get_internal_orders()
+		Get_external_orders()
+	}
+}
+
+func Run_elevator(){
+
+	
+
+	for{
+
+		for i:= 0; i < N_FLOORS; i++{
+
+			if external_orders[i] == 1{
+
+			Execute_order(i)
+
+			external_orders[i] = 0
+
+			}
+
+			if external_orders[i+N_FLOORS] == 1{
+
+			Execute_order(i)
+
+			external_orders[i+N_FLOORS] = 0
+
+			}
+		}
+	}
+}
+
+func Elev_lights(){
+
+	//Henrik fikk på et grønt lys. Dagen har vært bra. Sterke følelser. Mye tårer. Blasfemi. Heisen er ikke fornøyd.
+
+}
