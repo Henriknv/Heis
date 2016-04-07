@@ -38,7 +38,7 @@ func Elev_get_motor_direction() int {
 	return int(C.elev_get_motor_direction())
 }
 
-func Elev_set_button_lamp(button C.elev_button_type_t, floor int, value int) {
+func Elev_set_button_lamp(button int, floor int, value int) {
 	C.elev_set_button_lamp(C.elev_button_type_t(button), C.int(floor), C.int(value))
 }
 

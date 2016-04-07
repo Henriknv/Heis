@@ -2,6 +2,7 @@ package main
 
 import . "./network"
 import . "./elev"
+import . "fmt"
 
 func main() {
 
@@ -11,11 +12,13 @@ func main() {
 	Udp_init(local_listen_port, broadcast_listen_port)
 	Elevator_init()
 
-	//is_master := Master_or_slave()
+	is_master := Master_or_slave()
+	Println(is_master)
 
 	go Elev_maintenance()
 	go Get_orders()
 	go Run_elevator()
+	go Elev_lights()
 
 	for {
 
