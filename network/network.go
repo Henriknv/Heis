@@ -1,5 +1,7 @@
 package network
 
+//import . ".././constants"
+
 import (
 	. "encoding/json"
 	"fmt"
@@ -17,6 +19,17 @@ var broadcast_listen_port int
 var local_listen_port int
 
 // Struct and channels for send/receive functions.
+
+// type Msg_struct_MISO struct {
+// 	Elev_ID     string
+// 	Cost_matrix [N_FLOORS][N_BUTTONS]int
+// }
+
+// type Msg_struct_MOSI struct {
+// 	Elev_ID                string
+// 	Order_array            [N_FLOORS]int
+// 	External_lights_matrix [N_FLOORS][N_BUTTONS - 1]int
+// }
 
 type Msg_struct struct {
 	Text string

@@ -3,6 +3,9 @@ package main
 import . "./network"
 import . "./elev"
 import . "fmt"
+import (
+	"time"
+)
 
 func main() {
 
@@ -17,10 +20,13 @@ func main() {
 
 	go Elev_maintenance()
 	go Get_orders()
-	go Run_elevator()
+	go Execute_orders()
+	//go Run_elevator()
 	go Elev_lights()
 
 	for {
-
+		//Println("Elev_orders:", Elev_orders)
+		//Println(Local_order_matrix)
+		time.Sleep(1000 * time.Millisecond)
 	}
 }
