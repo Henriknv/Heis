@@ -6,6 +6,7 @@ package driver // where "driver" is the folder that contains io.go, io.c, io.h, 
 #include "elev.h"
 */
 import "C"
+import . "time"
 
 func Io_init() int {
 	return int(C.io_init())
@@ -38,6 +39,12 @@ func Elev_get_motor_direction() int {
 	return int(C.elev_get_motor_direction())
 }
 
+func Elev_stop_motor() {
+	Elev_set_motor_direction(-Elev_get_motor_direction())
+	Sleep(10 * Millisecond)
+	Elev_set_motor_direction(0)
+}
+
 func Elev_set_button_lamp(button int, floor int, value int) {
 	C.elev_set_button_lamp(C.elev_button_type_t(button), C.int(floor), C.int(value))
 }
@@ -68,4 +75,11 @@ func Elev_get_stop_signal() int {
 
 func Elev_get_obstruction_signal() int {
 	return int(C.elev_get_obstruction_signal())
+}
+
+func Elev_open_door() {
+	Elev_set_door_open_lamp(1)
+	Sleep(3000 * Millisecond)
+	Elev_set_door_open_lamp(0)
+	Sleep(500 * Millisecond)
 }

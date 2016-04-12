@@ -94,6 +94,8 @@ func Elevator_init() {
 
 	Elev_init()
 
+	Elev_set_motor_direction(0)
+
 	if Elev_get_floor_sensor_signal() == -1 {
 		Elev_set_motor_direction(-1)
 		for {
@@ -134,68 +136,208 @@ func Elev_maintenance() {
 	}
 }
 
+// func Execute_orders() {
+
+// 	//current_floor := <-Floor_sensor_chan
+
+// 	current_floor := Elev_get_floor_sensor_signal()
+
+// 	elev_dir := DIR_IDLE
+
+// 	var target_floor int
+
+// 	for {
+
+// 		//Println("Current floor:", current_floor)
+// 		//Println("Len orders:", len(Elev_orders))
+
+// 		if len(Elev_orders) > 0 {
+
+// 			target_floor = Elev_orders[0]
+
+// 			if current_floor < target_floor && (current_floor != -1) {
+
+// 				elev_dir = DIR_UP
+// 				Elev_set_motor_direction(elev_dir)
+
+// 			} else if current_floor > target_floor && (current_floor != -1) {
+
+// 				elev_dir = DIR_DOWN
+// 				Elev_set_motor_direction(elev_dir)
+
+// 			}
+
+// 			for current_floor != target_floor {
+
+// 				current_floor = <-Floor_sensor_chan
+
+// 				for i := 0; i < len(Elev_orders); i++ {
+// 					//Println("Current floor1:   ", current_floor)
+// 					if current_floor == Elev_orders[i] && current_floor != target_floor {
+
+// 						if Local_order_matrix[Elev_orders[i]][INTERNAL_BUTTONS] == 1 {
+
+// 							Elev_stop_motor()
+// 							Elev_open_door()
+// 							Println("Delete: 1")
+// 							delete_order(i, elev_dir)
+
+// 						} else if Local_order_matrix[Elev_orders[i]][EXT_UP_BUTTONS] == 1 && elev_dir == DIR_UP {
+
+// 							Elev_stop_motor()
+// 							Elev_open_door()
+// 							delete_order(i, elev_dir)
+// 						} else if Local_order_matrix[Elev_orders[i]][EXT_DOWN_BUTTONS] == 1 && elev_dir == DIR_DOWN {
+
+// 							Elev_stop_motor()
+// 							Elev_open_door()
+// 							delete_order(i, elev_dir)
+// 						}
+
+// 					}
+
+// 				}
+
+// 				Elev_set_motor_direction(elev_dir)
+// 			}
+
+// 			Elev_stop_motor()
+// 			Elev_open_door()
+// 			delete_order(0, elev_dir)
+// 			Println("Delete: 2")
+// 			elev_dir = DIR_IDLE
+
+// 		}
+// 	}
+// }
+
+// func delete_order(order_index int, last_dir int) {
+// 	//Println(Elev_orders, order_index)
+
+// 	if last_dir == DIR_UP {
+// 		Local_order_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
+// 		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
+
+// 		copy_cost_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
+// 		copy_cost_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
+// 	} else if last_dir == DIR_DOWN {
+// 		Local_order_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
+// 		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
+
+// 		copy_cost_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
+// 		copy_cost_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
+// 	}
+// 	if order_index == 0 || order_index == N_FLOORS-1 {
+// 		Local_order_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
+// 		copy_cost_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
+
+// 		Local_order_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
+// 		copy_cost_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
+// 	}
+// 	if len(Elev_costs) > 1 {
+// 		Elev_orders = append(Elev_orders[:order_index], Elev_orders[order_index+1:]...)
+// 		Elev_costs = append(Elev_costs[:order_index], Elev_costs[order_index+1:]...)
+// 	} else if len(Elev_costs) == 1 {
+// 		Elev_orders = Elev_orders[1:len(Elev_orders)]
+// 		Elev_costs = Elev_costs[1:len(Elev_costs)]
+// 		Println(len(Elev_costs))
+// 	}
+// }
+
+var elev_dir int
+
 func Execute_orders() {
+	current_floor = <-Floor_sensor_chan
 
-	current_floor := <-Floor_sensor_chan
-
-	elev_dir := DIR_IDLE
-
-	Println("TISS")
+	const FIRST_ELEMENT = 0
+	checked_floor = current_floor
+	var target_floor int
 
 	for {
 
+		Sort_orders()
+
 		if len(Elev_orders) > 0 {
 
-			target_floor := Elev_orders[0]
+			target_floor = Elev_orders[FIRST_ELEMENT]
+			Println(target_floor)
 
-			for !(current_floor == target_floor) {
+			if target_floor > current_floor {
+				elev_dir = DIR_UP
 
-				if current_floor < target_floor && (current_floor != -1) {
+			} else if target_floor < current_floor {
+				elev_dir = DIR_DOWN
 
-					elev_dir = DIR_UP
-					Elev_set_motor_direction(elev_dir)
-
-				} else if current_floor > target_floor && (current_floor != -1) {
-
-					elev_dir = DIR_DOWN
-					Elev_set_motor_direction(elev_dir)
-
-				}
-
-				current_floor = <-Floor_sensor_chan
-
-				// if elev_dir == DIR_UP && current_floor != LIMBO {
-				// 	if external_orders[current_floor] == 1 {
-
-				// 		Execute_order(current_floor)
-				// 		external_orders[current_floor] = 0
-				// 		internal_orders[current_floor] = 0
-				// 	}
-				// }
-
-				// if elev_dir == DIR_DOWN && current_floor != LIMBO {
-
-				// 	if external_orders[current_floor+N_FLOORS] == 1 {
-
-				// 		Execute_order(current_floor)
-				// 		external_orders[current_floor+N_FLOORS] = 0
-				// 		internal_orders[current_floor] = 0
-				// 	}
-				// }
+			} else {
+				elev_dir = DIR_IDLE
 			}
 
-			Elev_set_motor_direction(-elev_dir)
-			Sleep(10 * Millisecond)
-			elev_dir = DIR_IDLE
 			Elev_set_motor_direction(elev_dir)
 
-			Elev_set_door_open_lamp(1)
-			Sleep(3000 * Millisecond)
-			Elev_set_door_open_lamp(0)
-			Sleep(500 * Millisecond)
+			for current_floor != target_floor {
+
+				current_floor = <-Floor_sensor_chan
+				Sort_orders()
+
+				if current_floor != LIMBO {
+
+					for i := 0; i < len(Elev_orders); i++ {
+
+						if Elev_orders[i] == current_floor && current_floor != target_floor {
+
+							Elev_stop_motor()
+							Elev_open_door()
+							Println("Delete 2")
+							delete_order(i, elev_dir)
+							Elev_set_motor_direction(elev_dir)
+
+						}
+					}
+				}
+			}
+
+			Elev_stop_motor()
+			Elev_open_door()
+			Println("Delete 1")
+			delete_order(FIRST_ELEMENT, elev_dir)
 
 		}
 	}
+}
+
+func delete_order(order_index int, dir int) {
+
+	if dir == DIR_UP {
+		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
+		Local_order_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
+
+	} else if dir == DIR_DOWN {
+
+		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
+		Local_order_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
+
+	} else if dir == DIR_IDLE {
+
+		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
+		Local_order_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
+		Local_order_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
+
+	}
+
+	if Elev_orders[order_index] == 0 || Elev_orders[order_index] == N_FLOORS-1 {
+
+		Local_order_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
+		Local_order_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
+
+	}
+
+	if len(Elev_orders) > 0 {
+
+		Elev_orders = append(Elev_orders[:order_index], Elev_orders[order_index+1:]...)
+		Elev_costs = append(Elev_costs[:order_index], Elev_costs[order_index+1:]...)
+
+	}
+
 }
 
 func Get_internal_orders() {
@@ -234,51 +376,63 @@ func Get_orders() [N_FLOORS][N_BUTTONS]int {
 
 		Get_internal_orders()
 		Get_external_orders()
-		Sort_orders()
+
 	}
 }
 
 var sorting_bool bool
 
+var copy_cost_matrix [N_FLOORS][N_BUTTONS]int
+
+var old_cost_matrix [N_FLOORS][N_BUTTONS]int
+
+var checked_floor int
+
 func Sort_orders() {
 
-	costs := Calculate_cost(Local_order_matrix)
-	//Println("Costs:", costs)
+	copy_cost_matrix = Calculate_cost(Local_order_matrix)
 
-	for i := 0; i < N_FLOORS; i++ {
+	current_floor = <-Floor_sensor_chan
 
-		if costs[i][INTERNAL_BUTTONS] != 0 {
+	if old_cost_matrix != copy_cost_matrix {
 
-			Println("Hei")
+		for i := 0; i < N_FLOORS; i++ {
 
-			if len(Elev_orders) > 0 {
+			if copy_cost_matrix[i][INTERNAL_BUTTONS] != 0 {
 
-				Println("BÆSJ")
-				sorting_bool = true
+				if len(Elev_orders) > 0 {
 
-				for j := 0; j < len(Elev_orders); j++ {
+					sorting_bool = true
+					//Println("Ute: ", Elev_orders)
 
-					if Elev_orders[j] == i && Elev_costs[j] == costs[i][INTERNAL_COSTS] {
-						sorting_bool = false
+					for j := 0; j < len(Elev_orders); j++ {
+						//Println("Inne: ", Elev_orders)
+						//Println("I: ", i, " J: ", j, "  Cost: ", copy_cost_matrix[i][INTERNAL_BUTTONS])
+						if Elev_orders[j] == i {
+							sorting_bool = false
+							Elev_costs[j] = copy_cost_matrix[i][INTERNAL_BUTTONS]
+
+						}
+
 					}
 
-				}
+					if sorting_bool == true {
 
-				if sorting_bool {
+						Elev_orders = append(Elev_orders, i)
+						Elev_costs = append(Elev_costs, copy_cost_matrix[i][INTERNAL_BUTTONS])
 
-					Println("This is as far as I GO.")
+					}
+
+				} else if len(Elev_orders) == 0 {
+
 					Elev_orders = append(Elev_orders, i)
-					Elev_costs = append(Elev_costs, costs[i][INTERNAL_BUTTONS])
+					Elev_costs = append(Elev_costs, copy_cost_matrix[i][INTERNAL_BUTTONS])
 
 				}
-
-			} else if len(Elev_orders) == 0 {
-
-				Elev_orders = append(Elev_orders, i)
-				Elev_costs = append(Elev_costs, costs[i][INTERNAL_BUTTONS])
-
 			}
 		}
+
+		old_cost_matrix = copy_cost_matrix
 	}
 
 	// if len(external_orders) > 0 {
@@ -293,10 +447,9 @@ func Sort_orders() {
 	// }
 
 	//Elev_orders = merge(temp_orders, temp_costs)
-
-	Println("PROMP")
-
+	//Println("Inn: ", Elev_costs, "   ordrs  ", Elev_orders)
 	sort()
+	//Println("UT:  ", Elev_costs, "   orders: ", Elev_orders)
 }
 
 // func merge(array_one []int, array_two []int) [12][2]int {
@@ -345,7 +498,7 @@ func sort() {
 		}
 	}
 
-	Println("Elev_orders: ", Elev_orders, "Elev_costs: ", Elev_costs)
+	//Println("Elev_orders: ", Elev_orders, "Elev_costs: ", Elev_costs)
 
 }
 
@@ -447,6 +600,7 @@ func Elev_lights() {
 					}
 				}
 			}
+			current_order = Local_order_matrix
 		}
 	}
 }
