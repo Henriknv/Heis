@@ -40,8 +40,8 @@ func Elev_get_motor_direction() int {
 }
 
 func Elev_stop_motor() {
-	Elev_set_motor_direction(-Elev_get_motor_direction())
-	Sleep(10 * Millisecond)
+	//Elev_set_motor_direction(-Elev_get_motor_direction())
+	//Sleep(10 * Millisecond)
 	Elev_set_motor_direction(0)
 }
 
@@ -79,7 +79,7 @@ func Elev_get_obstruction_signal() int {
 
 func Elev_open_door() {
 	Elev_set_door_open_lamp(1)
-	Sleep(3000 * Millisecond)
+	Sleep(1500 * Millisecond)
 	Elev_set_door_open_lamp(0)
-	Sleep(500 * Millisecond)
+	Sleep(250 * Millisecond)
 }

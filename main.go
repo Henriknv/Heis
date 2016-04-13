@@ -3,6 +3,8 @@ package main
 import . "./network"
 import . "./elev"
 import . "fmt"
+import ."time"
+//import ."./fileio"
 
 func main() {
 
@@ -22,6 +24,9 @@ func main() {
 	go Elev_lights()
 
 	for {
+
+		//Println(Read())
+		Sleep(1000 * Millisecond)
 
 	}
 }

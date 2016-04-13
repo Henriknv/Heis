@@ -3,6 +3,7 @@ package elev
 import . ".././network"
 import . ".././driver"
 import . ".././constants"
+import .".././fileio"
 
 import (
 	. "fmt"
@@ -53,48 +54,13 @@ func Master_or_slave() bool {
 	return is_master
 }
 
-// func Master(){
-
-// 	var elev_Id_best string
-// 	var elev_Id_start string
-// 	var best_value[N_FLOORS][N_BUTTONS] int
-// 	var best_matrix [N_FLOORS][N_BUTTONS]int
-
-// 	var received Msg_struct_MISO
-
-// 	for{
-
-// 		select {
-// 			case received <- Receive_chan:
-// 			default:
-// 		}
-
-// 		elev_Id_received = received.Elev_ID
-
-// 		for i := 0; i < N_FLOORS; i++{
-// 			for j := 0; j<N_BUTTONS-1; j++{
-// 				if  received.Cost_matrix[i][j] < best_value[i][j] && received.Cost_matrix[i][j] != 0{
-// 					best_matrix[i][j] = received.Elev_ID
-// 					best_value[i][j] = received.Cost_matrix
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	for i := 0; i < N_FLOORS; i++{
-// 			for j := 0; j<N_BUTTONS-1; j++{
-
-// 				}
-// 			}
-// 		}
-
-// }
-
 func Elevator_init() {
 
 	Elev_init()
 
 	Elev_set_motor_direction(0)
+
+	Local_order_matrix = Read()
 
 	if Elev_get_floor_sensor_signal() == -1 {
 		Elev_set_motor_direction(-1)
@@ -136,123 +102,15 @@ func Elev_maintenance() {
 	}
 }
 
-// func Execute_orders() {
-
-// 	//current_floor := <-Floor_sensor_chan
-
-// 	current_floor := Elev_get_floor_sensor_signal()
-
-// 	elev_dir := DIR_IDLE
-
-// 	var target_floor int
-
-// 	for {
-
-// 		//Println("Current floor:", current_floor)
-// 		//Println("Len orders:", len(Elev_orders))
-
-// 		if len(Elev_orders) > 0 {
-
-// 			target_floor = Elev_orders[0]
-
-// 			if current_floor < target_floor && (current_floor != -1) {
-
-// 				elev_dir = DIR_UP
-// 				Elev_set_motor_direction(elev_dir)
-
-// 			} else if current_floor > target_floor && (current_floor != -1) {
-
-// 				elev_dir = DIR_DOWN
-// 				Elev_set_motor_direction(elev_dir)
-
-// 			}
-
-// 			for current_floor != target_floor {
-
-// 				current_floor = <-Floor_sensor_chan
-
-// 				for i := 0; i < len(Elev_orders); i++ {
-// 					//Println("Current floor1:   ", current_floor)
-// 					if current_floor == Elev_orders[i] && current_floor != target_floor {
-
-// 						if Local_order_matrix[Elev_orders[i]][INTERNAL_BUTTONS] == 1 {
-
-// 							Elev_stop_motor()
-// 							Elev_open_door()
-// 							Println("Delete: 1")
-// 							delete_order(i, elev_dir)
-
-// 						} else if Local_order_matrix[Elev_orders[i]][EXT_UP_BUTTONS] == 1 && elev_dir == DIR_UP {
-
-// 							Elev_stop_motor()
-// 							Elev_open_door()
-// 							delete_order(i, elev_dir)
-// 						} else if Local_order_matrix[Elev_orders[i]][EXT_DOWN_BUTTONS] == 1 && elev_dir == DIR_DOWN {
-
-// 							Elev_stop_motor()
-// 							Elev_open_door()
-// 							delete_order(i, elev_dir)
-// 						}
-
-// 					}
-
-// 				}
-
-// 				Elev_set_motor_direction(elev_dir)
-// 			}
-
-// 			Elev_stop_motor()
-// 			Elev_open_door()
-// 			delete_order(0, elev_dir)
-// 			Println("Delete: 2")
-// 			elev_dir = DIR_IDLE
-
-// 		}
-// 	}
-// }
-
-// func delete_order(order_index int, last_dir int) {
-// 	//Println(Elev_orders, order_index)
-
-// 	if last_dir == DIR_UP {
-// 		Local_order_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
-// 		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
-
-// 		copy_cost_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
-// 		copy_cost_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
-// 	} else if last_dir == DIR_DOWN {
-// 		Local_order_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
-// 		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
-
-// 		copy_cost_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
-// 		copy_cost_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
-// 	}
-// 	if order_index == 0 || order_index == N_FLOORS-1 {
-// 		Local_order_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
-// 		copy_cost_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
-
-// 		Local_order_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
-// 		copy_cost_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
-// 	}
-// 	if len(Elev_costs) > 1 {
-// 		Elev_orders = append(Elev_orders[:order_index], Elev_orders[order_index+1:]...)
-// 		Elev_costs = append(Elev_costs[:order_index], Elev_costs[order_index+1:]...)
-// 	} else if len(Elev_costs) == 1 {
-// 		Elev_orders = Elev_orders[1:len(Elev_orders)]
-// 		Elev_costs = Elev_costs[1:len(Elev_costs)]
-// 		Println(len(Elev_costs))
-// 	}
-// }
-
 var elev_dir int
 
 func Execute_orders() {
 	current_floor = <-Floor_sensor_chan
-
+	current_floor := 0
+	previous_floor := 0
 	const FIRST_ELEMENT = 0
-	checked_floor = current_floor
 	var target_floor int
-
+	
 	for {
 
 		Sort_orders()
@@ -273,11 +131,11 @@ func Execute_orders() {
 			}
 
 			Elev_set_motor_direction(elev_dir)
-
+			//Sort_orders()
 			for current_floor != target_floor {
 
 				current_floor = <-Floor_sensor_chan
-				Sort_orders()
+				
 
 				if current_floor != LIMBO {
 
@@ -303,7 +161,55 @@ func Execute_orders() {
 
 		}
 	}
+	
+
+	/*
+	for {
+		Sleep(200*Millisecond)
+		current_floor = <-Floor_sensor_chan
+		if current_floor != -1 {
+			previous_floor = current_floor
+		}
+
+		
+
+		//lock
+		Sort_orders()
+		num_orders := len(Elev_orders)
+		if num_orders > 0 {
+			target_floor = Elev_orders[0]
+		}
+		//unlock
+
+		if target_floor > previous_floor {
+			elev_dir = DIR_UP
+		} else if target_floor < previous_floor {
+			elev_dir = DIR_DOWN
+		}
+
+		Println(Local_order_matrix)
+		Println("cf:", current_floor, " pf:", previous_floor, " tf:", target_floor, " ed:", elev_dir, " no:", num_orders)
+
+		if num_orders > 0 {
+			if target_floor == current_floor {
+				Elev_stop_motor()
+				Elev_open_door()
+				delete_order(0, elev_dir)
+			} else {
+				Elev_set_motor_direction(elev_dir)
+			}
+		} else {
+			Elev_stop_motor()
+		}
+
+	}*/
+	
+
 }
+
+
+
+
 
 func delete_order(order_index int, dir int) {
 
@@ -372,10 +278,20 @@ func Get_external_orders() {
 
 func Get_orders() [N_FLOORS][N_BUTTONS]int {
 
+	var temp [N_FLOORS][N_BUTTONS]int
+
 	for {
+
+		temp = Local_order_matrix
 
 		Get_internal_orders()
 		Get_external_orders()
+
+		if Local_order_matrix != temp{
+
+			Write(Local_order_matrix)
+
+		}
 
 	}
 }
@@ -386,7 +302,6 @@ var copy_cost_matrix [N_FLOORS][N_BUTTONS]int
 
 var old_cost_matrix [N_FLOORS][N_BUTTONS]int
 
-var checked_floor int
 
 func Sort_orders() {
 
@@ -403,11 +318,9 @@ func Sort_orders() {
 				if len(Elev_orders) > 0 {
 
 					sorting_bool = true
-					//Println("Ute: ", Elev_orders)
 
 					for j := 0; j < len(Elev_orders); j++ {
-						//Println("Inne: ", Elev_orders)
-						//Println("I: ", i, " J: ", j, "  Cost: ", copy_cost_matrix[i][INTERNAL_BUTTONS])
+
 						if Elev_orders[j] == i {
 							sorting_bool = false
 							Elev_costs[j] = copy_cost_matrix[i][INTERNAL_BUTTONS]
@@ -434,40 +347,8 @@ func Sort_orders() {
 
 		old_cost_matrix = copy_cost_matrix
 	}
-
-	// if len(external_orders) > 0 {
-
-	// 	for i := 0; i < len(external_orders); i++ {
-
-	// 		temp_orders = append(temp_orders, external_orders[i][INTERNAL_FLOORS])
-	// 		temp_costs = append(temp_costs, external_orders[i][INTERNAL_COSTS])
-
-	// 	}
-
-	// }
-
-	//Elev_orders = merge(temp_orders, temp_costs)
-	//Println("Inn: ", Elev_costs, "   ordrs  ", Elev_orders)
 	sort()
-	//Println("UT:  ", Elev_costs, "   orders: ", Elev_orders)
 }
-
-// func merge(array_one []int, array_two []int) [12][2]int {
-
-// 	temp_len := len(array_one)
-// 	Println(temp_len)
-
-// 	var merged_array [12][2]int
-
-// 	for i := 0; i < temp_len; i++ {
-
-// 		merged_array[i][INTERNAL_FLOORS] = array_one[i]
-// 		merged_array[i][INTERNAL_COSTS] = array_two[i]
-
-// 	}
-
-// 	return merged_array
-// }
 
 func sort() {
 
@@ -497,54 +378,8 @@ func sort() {
 			}
 		}
 	}
-
-	//Println("Elev_orders: ", Elev_orders, "Elev_costs: ", Elev_costs)
-
 }
 
-// func Run_elevator() {
-
-// 	internal := false
-
-// 	for {
-
-// 		for i := 0; i < N_FLOORS; i++ {
-
-// 			if internal_orders[i] == 1 {
-
-// 				Execute_order(i)
-
-// 				internal_orders[i] = 0
-
-// 				internal = true
-
-// 			}
-// 		}
-
-// 		if !internal {
-// 			for i := 0; i < N_FLOORS; i++ {
-
-// 				if external_orders[i] == 1 {
-
-// 					Execute_order(i)
-
-// 					external_orders[i] = 0
-
-// 				}
-
-// 				if external_orders[i+N_FLOORS] == 1 {
-
-// 					Execute_order(i)
-
-// 					external_orders[i+N_FLOORS] = 0
-
-// 				}
-// 			}
-// 		}
-
-// 		internal = false
-// 	}
-// }
 
 func Elev_lights() {
 

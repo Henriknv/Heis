@@ -7,13 +7,19 @@ import (
 	"os"
 )
 
+import .".././constants"
+
+const filename = "order_backup.txt"
+
+var read_buf [N_FLOORS][N_BUTTONS]int
+
 func check(e error) {
 	if e != nil {
 		panic(e)
 	}
 }
 
-func Read(filename string) ([]int, []int) {
+func Read() [N_FLOORS][N_BUTTONS]int{
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		Println("File does not exist at location. Making new queue file.")
@@ -23,11 +29,7 @@ func Read(filename string) ([]int, []int) {
 	dat, err := ioutil.ReadFile(filename)
 	check(err)
 
-	var b [2][]int
-	json.Unmarshal(dat, &b)
+	json.Unmarshal(dat, &read_buf)
 
-	internal_orders := b[0]
-	external_orders := b[1]
-
-	return internal_orders, external_orders
+	return read_buf
 }

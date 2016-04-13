@@ -2,30 +2,20 @@ package fileio
 
 import (
 	"encoding/json"
-	. "fmt"
 	"io/ioutil"
 	"os"
 )
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
+import .".././constants"
 
-func Write(filename string, internal_orders []int, external_orders []int) {
+func Write(Local_order_matrix [N_FLOORS][N_BUTTONS]int) {
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		os.Create(filename)
 	}
 
-	var orders [2][]int
+	buf, _ := json.Marshal(Local_order_matrix)
 
-	orders[0] = internal_orders
-	orders[1] = external_orders
-
-	b, _ := json.Marshal(orders)
-
-	err := ioutil.WriteFile(filename, b, 0644)
+	err := ioutil.WriteFile(filename, buf, 0644)
 	check(err)
 }
