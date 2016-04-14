@@ -2,7 +2,7 @@ package main
 
 import . "./network"
 import . "./elev"
-import . "fmt"
+//import . "fmt"
 import ."time"
 //import ."./fileio"
 
@@ -11,16 +11,26 @@ func main() {
 	broadcast_listen_port := 25001
 	local_listen_port := 20020
 
-	Udp_init(local_listen_port, broadcast_listen_port)
-	Elevator_init()
+	send_chan := make(chan Msg_struct, 100)
+	receive_chan := make(chan Msg_struct, 100)
+
+	Udp_init(local_listen_port, broadcast_listen_port, send_chan, receive_chan)
+	Elevator_init(send_chan, receive_chan)
 
 	is_master := Master_or_slave()
-	Println(is_master)
+
+	if is_master {
+
+		go Master()
+		go Slave()
+
+	}else{
+		go Slave()
+	}
 
 	go Elev_maintenance()
 	go Get_orders()
 	go Execute_orders()
-	//go Run_elevator()
 	go Elev_lights()
 
 	for {
