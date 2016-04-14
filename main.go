@@ -2,8 +2,9 @@ package main
 
 import . "./network"
 import . "./elev"
-//import . "fmt"
+import . "fmt"
 import ."time"
+//import ."./driver"
 //import ."./fileio"
 
 func main() {
@@ -11,32 +12,46 @@ func main() {
 	broadcast_listen_port := 25001
 	local_listen_port := 20020
 
-	send_chan := make(chan Msg_struct, 100)
-	receive_chan := make(chan Msg_struct, 100)
+	Master_output_ch := make(chan MOSI, 100)
+	Master_input_ch := make(chan MISO, 100)
+	Slave_input_ch := make(chan MOSI, 100)
+	Slave_output_ch := make(chan MISO, 100)
 
-	Udp_init(local_listen_port, broadcast_listen_port, send_chan, receive_chan)
-	Elevator_init(send_chan, receive_chan)
+	Udp_init(local_listen_port, broadcast_listen_port, Slave_output_ch, Slave_input_ch, Master_input_ch, Master_output_ch)
+	Elevator_init()
 
-	is_master := Master_or_slave()
+	go Slave(Slave_input_ch)
+
+	is_master := Master_or_slave(Slave_input_ch)
+
+	Println(is_master)
 
 	if is_master {
 
-		go Master()
-		go Slave()
+		go Master(Master_input_ch, Master_output_ch)
 
-	}else{
-		go Slave()
 	}
 
 	go Elev_maintenance()
-	go Get_orders()
+	go Get_orders(Slave_output_ch)
 	go Execute_orders()
 	go Elev_lights()
 
-	for {
+	printElevOrders := Tick(100 * Millisecond)
 
-		//Println(Read())
-		Sleep(1000 * Millisecond)
+	//Slave_output_ch <- MISO{}
+	//Master_output_ch <- MOSI{}
+
+	for {
+		select {
+		case <-printElevOrders:
+			Println("Elev orders: ", Elev_orders, "\n", "Elev costs: ", Elev_costs)
+		case msg := <-Master_input_ch:
+			Println("Master input:", msg)
+		case msg := <-Slave_input_ch:
+			Println("Slave input:", msg)
+		}
+
 
 	}
 }

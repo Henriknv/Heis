@@ -77,6 +77,6 @@ func Elev_get_obstruction_signal() int {
 
 func Elev_open_door() {
 	Elev_set_door_open_lamp(1)
-	Sleep(1000 * Millisecond)
+	Sleep(3000 * Millisecond)
 	Elev_set_door_open_lamp(0)
 }

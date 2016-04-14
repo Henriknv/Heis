@@ -11,6 +11,9 @@ import (
 )
 
 var Local_order_matrix [N_FLOORS][N_BUTTONS]int
+var External_order_matrix[N_FLOORS][N_BUTTONS]int
+var Master_order_matrix[N_FLOORS][N_BUTTONS]int
+
 var external_orders [][]int
 var Elev_orders []int
 var Elev_costs []int
@@ -18,15 +21,12 @@ var Elev_costs []int
 var INTERNAL_COSTS = 1
 var INTERNAL_FLOORS = 0
 
-var send_chan chan Msg_struct
-var receive_chan chan Msg_struct
-
 var Floor_sensor_chan = make(chan int)
 var Elev_id string
 
-func Master_or_slave() bool {
+func Master_or_slave(Slave_input_ch <-chan MOSI) bool {
 
-	var buf Msg_struct
+	var buf MOSI
 	_ = buf
 
 	var is_master bool
@@ -36,7 +36,7 @@ func Master_or_slave() bool {
 	case <-After(1 * Second):
 		is_master = true
 
-	case buf = <-receive_chan:
+	case buf = <-Slave_input_ch:
 		is_master = false
 
 	}
@@ -47,7 +47,6 @@ func Master_or_slave() bool {
 		Elev_id = Local_addr.String()[12:15]
 		Println(Elev_id)
 		
-
 	} else {
 
 		Println("I am slave.")
@@ -56,13 +55,12 @@ func Master_or_slave() bool {
 
 	}
 
+	Println(External_order_matrix, "\n", Master_order_matrix)
+
 	return is_master
 }
 
-func Elevator_init(send_chan_in chan Msg_struct, receive_chan_in chan Msg_struct) { // FIX names
-
-	send_chan = send_chan_in
-	receive_chan = receive_chan_in
+func Elevator_init() { // FIX names
 
 	Elev_init()
 
@@ -119,12 +117,11 @@ func Execute_orders() {
 	
 	for {
 
-		Sort_orders()
-
+		Sort_orders(Master_order_matrix)
+		elev_dir = DIR_IDLE
 		if len(Elev_orders) > 0 {
 
 			target_floor = Elev_orders[0]
-			Println(target_floor)
 
 			if target_floor > current_floor {
 				elev_dir = DIR_UP
@@ -142,10 +139,8 @@ func Execute_orders() {
 
 				current_floor = <-Floor_sensor_chan
 				
-				Sort_orders()
+				Sort_orders(Master_order_matrix)
 				
-
-
 				if current_floor != LIMBO {
 
 					for i := 0; i < len(Elev_orders); i++ {
@@ -165,13 +160,15 @@ func Execute_orders() {
 			Elev_stop_motor()
 			Elev_open_door()
 			delete_order(0, elev_dir)
-			elev_dir = DIR_IDLE
+			
 
 		}
 	}
 }
 
 func delete_order(order_index int, dir int) {
+
+	Println(dir)
 
 	if dir == DIR_UP {
 		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
@@ -238,9 +235,10 @@ func Get_external_orders() {
 	
 }
 
-func Get_orders() [N_FLOORS][N_BUTTONS]int {
+func Get_orders(Slave_output_ch chan MISO) [N_FLOORS][N_BUTTONS]int {
 
 	var temp [N_FLOORS][N_BUTTONS]int
+	var temp_slave_out MISO
 
 	for {
 
@@ -250,12 +248,12 @@ func Get_orders() [N_FLOORS][N_BUTTONS]int {
 		Get_external_orders()
 
 		if Local_order_matrix != temp{
-			Println("Local_order_matrix: ", Local_order_matrix)
-			order_update.External_cost_matrix = Calculate_cost(Local_order_matrix, <-Floor_sensor_chan)
-			order_update.Elev_id = Elev_id
-			order_update.Order_status = false
 
-			send_chan <- order_update
+			temp_slave_out.Elev_id = Elev_id
+			temp_slave_out.Local_order_matrix = Local_order_matrix
+			temp_slave_out.Local_cost_matrix = Calculate_cost(Local_order_matrix)
+
+			Slave_output_ch <- temp_slave_out
 
 			Write(Local_order_matrix)
 
@@ -269,53 +267,53 @@ var copy_cost_matrix [N_FLOORS][N_BUTTONS]int
 
 var old_cost_matrix [N_FLOORS][N_BUTTONS]int
 
-var order_update Msg_struct
-
-func Sort_orders() {
-
-	copy_cost_matrix = Calculate_cost(Local_order_matrix, <-Floor_sensor_chan)
-
-
+func Sort_orders(copy_cost_matrix [N_FLOORS][N_BUTTONS]int) {
 
 	if old_cost_matrix != copy_cost_matrix {
 
-
 		for i := 0; i < N_FLOORS; i++ {
 
-			if copy_cost_matrix[i][INTERNAL_BUTTONS] != 0 {
+			for j := 0; j < N_BUTTONS; j++{
 
-				if len(Elev_orders) > 0 {
+				if copy_cost_matrix[i][j] != 0 {
 
-					sorting_bool = true
+					if len(Elev_orders) > 0 {
 
-					for j := 0; j < len(Elev_orders); j++ {
+						sorting_bool = true
 
-						if Elev_orders[j] == i {
-							sorting_bool = false
-							Elev_costs[j] = copy_cost_matrix[i][INTERNAL_BUTTONS]
+						for k := 0; k < len(Elev_orders); k++ {
+
+							if Elev_orders[k] == i {
+								if copy_cost_matrix[i][j] < Elev_costs[k]{
+									
+									Elev_costs[k] = copy_cost_matrix[i][j]
+
+								}
+
+								sorting_bool = false
+							}
 						}
-					}
 
-					if sorting_bool == true {
+						if sorting_bool == true {
 
+							Elev_orders = append(Elev_orders, i)
+							Elev_costs = append(Elev_costs, copy_cost_matrix[i][j])
+
+						}
+
+					} else if len(Elev_orders) == 0 {	
 						Elev_orders = append(Elev_orders, i)
-						Elev_costs = append(Elev_costs, copy_cost_matrix[i][INTERNAL_BUTTONS])
+						Elev_costs = append(Elev_costs, copy_cost_matrix[i][j])
 
 					}
-
-				} else if len(Elev_orders) == 0 {
-
-					Elev_orders = append(Elev_orders, i)
-					Elev_costs = append(Elev_costs, copy_cost_matrix[i][INTERNAL_BUTTONS])
-
 				}
 			}
 		}
 
 		old_cost_matrix = copy_cost_matrix
 		sequential_sort()
+
 	}
-	
 }
 
 func sequential_sort() {
@@ -403,126 +401,126 @@ func Elev_lights() {
 					}
 				}
 			}
+
 			current_order = Local_order_matrix
+		
 		}
 	}
 }
 
-// msg_received.Elev_Id
+type Matrices struct{
 
-// msg_received.External_cost_matrix
+	Matrix [N_FLOORS][N_BUTTONS]int
+}
 
-// msg_received.Order_status
+func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI){
 
-var Elevator_info Msg_struct
+	var temp_in MISO
+	var temp_out MOSI
+	var prev_online_elev_states []MISO
+	var Online_elevators []MISO
+	var in_list bool
+	var return_matrices []Matrices
+	var best_cost int
+	var best_elev int
 
-var updated bool
-
-func Master(){
-
-	var elevators []Msg_struct
-	var best int
-	var best_case int
-	var order Msg_struct
-	var change bool
 	for{
 
-		Elevator_info = <-receive_chan
+		temp_in = <- Master_input_ch
 
-		if Elevator_info.Elev_id == Elev_id  && Elevator_info.Order_status{
+		var temp_matrix Matrices
+
+		for i := 0; i < len(Online_elevators); i++{
+
+			in_list = false
+
+			if Online_elevators[i].Elev_id == temp_in.Elev_id{
+
+				in_list = true
+				prev_online_elev_states[i] = Online_elevators[i]
+				Online_elevators[i] = temp_in
+
+			}
+		}
+
+		if in_list != true{
+
+			prev_online_elev_states = append(prev_online_elev_states, temp_in)
+			Online_elevators = append(Online_elevators, temp_in)
+			return_matrices = append(return_matrices, temp_matrix)
+
+		}
+
+		for i:= 0; i < N_FLOORS; i++{
+
+			for j:= 0; j < N_BUTTONS; j++{
+
+				//Setting an element in External_order_matrix.
+
+				for k:=0; k < len(Online_elevators); k++{
+
+					if Online_elevators[k].Local_order_matrix[i][j] == 1{
+
+						External_order_matrix[i][j] = 1
+
+					}
+				}
+
+				//Detecting a change in External_order_matrix.
+
+				for k:= 0; k < len(Online_elevators); k++{
+
+					if Online_elevators[k].Local_order_matrix[i][j] != prev_online_elev_states[k].Local_order_matrix[i][j] && prev_online_elev_states[k].Local_order_matrix[i][j] == 1{
+						
+						External_order_matrix[i][j] = 0
+					
+					}
+				}
+
+				//Setting the order of lowest cost to correct online elevator.
+
+				best_cost = N_FLOORS*N_BUTTONS*10
+
+				for k:= 0; k < len(Online_elevators); k++ {
+
+					if Online_elevators[k].Local_cost_matrix[i][j] < best_cost{
+						best_cost = Online_elevators[k].Local_cost_matrix[i][j]
+						best_elev = k
+					}
+				}
+
+				return_matrices[best_elev].Matrix[i][j] = best_cost
 			
-			Append_order(Elevator_info.Order, Elevator_info.Cost)
-
-		if !Elevator_info.Order_status{
-			updated = false
-
-			for i := 0; i < len(elevators); i++{
-
-				if Elevator_info.Elev_id == elevators[i].Elev_id{
-
-					elevators[i] = Elevator_info
-
-					updated = true
-				}
-
 			}
+		}
 
-			if !updated{
+		for k := 0; k < len(Online_elevators); k++{
 
-				elevators = append(elevators, Elevator_info)
+			temp_out.Elev_id = Online_elevators[k].Elev_id
+			temp_out.External_order_matrix = External_order_matrix
+			temp_out.Master_order_matrix = return_matrices[k].Matrix
 
-			}
+			Master_output_ch <- temp_out
 
-			for i := 0; i < N_FLOORS; i++{
-
-				for j := 0; j < N_BUTTONS-1; j++{
-					best = N_FLOORS*N_BUTTONS*10
-					change = false	
-					for k := 0; k < len(elevators); k++{
-
-						if elevators[k].External_cost_matrix[i][j] != 0{
-
-							if elevators[k].External_cost_matrix[i][j] < best{
-								best = elevators[k].External_cost_matrix[i][j]
-								best_case = k
-							}
-
-							change = true
-
-						}
-					}
-					if change{
-						order.Elev_id = elevators[best_case].Elev_id
-						Println("I: ", i, "   Cost: ", best)
-						Println(Elev_orders,"  ", Elev_costs)
-						order.Order = i
-						order.Cost = best
-						order.Order_status = true
-
-						send_chan <- order
-						}
-					}
-				}
-			}
 		}
 	}
 }
 
-func Append_order(new_order int, order_cost int){
+var Ext_orders [N_FLOORS][N_BUTTONS]int
 
-	order_exists := false
+func Slave(Slave_input_ch chan MOSI){
 
-	for i := 0; i < len(Elev_orders);i++{
+	var temp_in MOSI
 
-		if Elev_orders[i] == new_order{
-
-			order_exists = true
-
-			if order_cost < Elev_costs[i]{
-
-				Elev_costs[i] = order_cost
-
-			}
- 
-		}
-
-	}
-	if !order_exists{
-
-		Elev_orders = append(Elev_orders, new_order)
-		Elev_costs = append(Elev_costs, order_cost)
-
-	}
-}
-
-func Slave(){
-	var Elevator_in Msg_struct
 	for{
-		Elevator_in = <-receive_chan
 
-		if Elevator_in.Elev_id == Elev_id  && Elevator_in.Order_status{
-			
-			Append_order(Elevator_in.Order, Elevator_in.Cost)
+		temp_in = <-Slave_input_ch
+		if temp_in.Elev_id == Elev_id{
+
+			Master_order_matrix	= temp_in.Master_order_matrix
+			Ext_orders = temp_in.External_order_matrix
+		
 		}
 	}
 }
+

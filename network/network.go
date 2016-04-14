@@ -7,7 +7,7 @@ import (
 	. "fmt"
 	"net"
 	"strconv"
-//	"time"
+	"strings"
 )
 
 // Ports and addresses for send/receive:
@@ -20,16 +20,17 @@ var local_listen_port int
 
 // Struct and channels for send/receive functions.
 
-
-type Msg_struct struct {
+type MISO struct {
 	Elev_id string
-	External_cost_matrix [N_FLOORS][N_BUTTONS]int
-	Order_status bool
-	Cost int
-	Order int
+	Local_order_matrix [N_FLOORS][N_BUTTONS]int
+	Local_cost_matrix [N_FLOORS][N_BUTTONS]int
 }
 
-
+type MOSI struct {
+	Elev_id string
+	External_order_matrix [N_FLOORS][N_BUTTONS]int
+	Master_order_matrix [N_FLOORS][N_BUTTONS]int
+}
 
 // Functions for aquiring broadcast and local addresses:
 
@@ -71,55 +72,48 @@ func get_local_addr(local_listen_port int) (err error) {
 
 // Functions to send/receive a message via UDP:
 
-func Udp_receive(Receieve_chan chan Msg_struct) {
+func Udp_send(mosiCh <-chan MOSI, misoCh <-chan MISO){
 
-	var message Msg_struct
+	conn, _ := net.DialUDP("udp", Local_addr, Broadcast_addr)
 
 	for {
+		select {
+		case miso := <-misoCh:
+			buf, _ := Marshal(miso)
+			conn.Write([]byte( "MISO"+string(buf) ))
+		case mosi := <-mosiCh:
+			buf, _ := Marshal(mosi)
+			conn.Write([]byte( "MOSI"+string(buf) ))
+		}
+	}
+}
 
-		buf := make([]byte, 1024)
+func Udp_receive(mosiCh chan<- MOSI, misoCh chan<- MISO){
 
-		conn, _ := net.ListenUDP("udp", Broadcast_addr)
+	conn, _ := net.ListenUDP("udp", Broadcast_addr)
+	buf := make([]byte, 1024)
 
-		//time.Sleep(100 * time.Millisecond)
-
+	for {
 		n, _, _ := conn.ReadFromUDP(buf)
-
-		Unmarshal(buf[:n], &message)
-		Println("received:", message)
-		Receieve_chan <- message
-
-
-		conn.Close()
-
-	}
-
-}
-	
-func Udp_send(Send_chan chan Msg_struct) {
-
-	var message Msg_struct
-
-	for {
-
-		message = <- Send_chan
-
-		conn, _ := net.DialUDP("udp", Local_addr, Broadcast_addr)
-		
-		buf, _ := Marshal(message)
-
-		conn.Write(buf)
-
-		conn.Close()
+		if strings.HasPrefix(string(buf[:n]), "MISO") {
+			var miso MISO
+			Unmarshal(buf[4:n], &miso)
+			misoCh <- miso
+		} else if strings.HasPrefix(string(buf[:n]), "MOSI") {
+			var mosi MOSI
+			Unmarshal(buf[4:n], &mosi)
+			mosiCh <- mosi
+		}
 	}
 }
 
-func Udp_init(local_listen_port int, broadcast_listen_port int, send_chan chan Msg_struct, receive_chan chan Msg_struct) {
+
+func Udp_init(local_listen_port int, broadcast_listen_port int, Slave_send_ch chan MISO, Slave_receive_ch chan MOSI, Master_receive chan MISO, Master_send chan MOSI) {
 
 	get_broadcast_addr(broadcast_listen_port)
 	get_local_addr(local_listen_port)
 
-	go Udp_send(send_chan)
-	go Udp_receive(receive_chan)
+	go Udp_send(Master_send, Slave_send_ch)
+	go Udp_receive(Slave_receive_ch, Master_receive)
 
 }
