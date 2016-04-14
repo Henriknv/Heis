@@ -32,7 +32,7 @@ func Master_or_slave() bool {
 	case <-After(1 * Second):
 		is_master = true
 
-	case buf = <-Send_chan:
+	case buf = <-Receive_chan:
 		is_master = false
 
 	}
@@ -106,9 +106,8 @@ var elev_dir int
 
 func Execute_orders() {
 	current_floor = <-Floor_sensor_chan
-	current_floor := 0
-	previous_floor := 0
-	const FIRST_ELEMENT = 0
+	//current_floor := 0
+	//previous_floor := 0
 	var target_floor int
 	
 	for {
@@ -117,7 +116,7 @@ func Execute_orders() {
 
 		if len(Elev_orders) > 0 {
 
-			target_floor = Elev_orders[FIRST_ELEMENT]
+			target_floor = Elev_orders[0]
 			Println(target_floor)
 
 			if target_floor > current_floor {
@@ -131,11 +130,12 @@ func Execute_orders() {
 			}
 
 			Elev_set_motor_direction(elev_dir)
-			//Sort_orders()
+			
 			for current_floor != target_floor {
 
 				current_floor = <-Floor_sensor_chan
 				
+				Sort_orders()
 
 				if current_floor != LIMBO {
 
@@ -145,7 +145,6 @@ func Execute_orders() {
 
 							Elev_stop_motor()
 							Elev_open_door()
-							Println("Delete 2")
 							delete_order(i, elev_dir)
 							Elev_set_motor_direction(elev_dir)
 
@@ -156,60 +155,12 @@ func Execute_orders() {
 
 			Elev_stop_motor()
 			Elev_open_door()
-			Println("Delete 1")
-			delete_order(FIRST_ELEMENT, elev_dir)
+			delete_order(0, elev_dir)
+			elev_dir = DIR_IDLE
 
 		}
 	}
-	
-
-	/*
-	for {
-		Sleep(200*Millisecond)
-		current_floor = <-Floor_sensor_chan
-		if current_floor != -1 {
-			previous_floor = current_floor
-		}
-
-		
-
-		//lock
-		Sort_orders()
-		num_orders := len(Elev_orders)
-		if num_orders > 0 {
-			target_floor = Elev_orders[0]
-		}
-		//unlock
-
-		if target_floor > previous_floor {
-			elev_dir = DIR_UP
-		} else if target_floor < previous_floor {
-			elev_dir = DIR_DOWN
-		}
-
-		Println(Local_order_matrix)
-		Println("cf:", current_floor, " pf:", previous_floor, " tf:", target_floor, " ed:", elev_dir, " no:", num_orders)
-
-		if num_orders > 0 {
-			if target_floor == current_floor {
-				Elev_stop_motor()
-				Elev_open_door()
-				delete_order(0, elev_dir)
-			} else {
-				Elev_set_motor_direction(elev_dir)
-			}
-		} else {
-			Elev_stop_motor()
-		}
-
-	}*/
-	
-
 }
-
-
-
-
 
 func delete_order(order_index int, dir int) {
 
@@ -292,7 +243,6 @@ func Get_orders() [N_FLOORS][N_BUTTONS]int {
 			Write(Local_order_matrix)
 
 		}
-
 	}
 }
 
@@ -306,8 +256,6 @@ var old_cost_matrix [N_FLOORS][N_BUTTONS]int
 func Sort_orders() {
 
 	copy_cost_matrix = Calculate_cost(Local_order_matrix)
-
-	current_floor = <-Floor_sensor_chan
 
 	if old_cost_matrix != copy_cost_matrix {
 
@@ -324,9 +272,7 @@ func Sort_orders() {
 						if Elev_orders[j] == i {
 							sorting_bool = false
 							Elev_costs[j] = copy_cost_matrix[i][INTERNAL_BUTTONS]
-
 						}
-
 					}
 
 					if sorting_bool == true {
@@ -346,11 +292,12 @@ func Sort_orders() {
 		}
 
 		old_cost_matrix = copy_cost_matrix
+		sequential_sort()
 	}
-	sort()
+	
 }
 
-func sort() {
+func sequential_sort() {
 
 	counter := 1
 
@@ -438,4 +385,15 @@ func Elev_lights() {
 			current_order = Local_order_matrix
 		}
 	}
+}
+
+func master(){
+
+	for{
+
+
+
+
+	}
+
 }

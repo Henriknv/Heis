@@ -1,6 +1,6 @@
 package elev
 
-import . ".././driver"
+//import . ".././driver"
 import . ".././constants"
 
 //import . "fmt"
@@ -32,7 +32,7 @@ var cost_matrix [N_FLOORS][N_BUTTONS]int
 
 func Calculate_cost(order_matrix [N_FLOORS][N_BUTTONS]int) [N_FLOORS][N_BUTTONS]int {
 
-	dir = Elev_get_motor_direction()
+	
 
 	current_floor = <-Floor_sensor_chan
 
@@ -52,33 +52,33 @@ func Calculate_cost(order_matrix [N_FLOORS][N_BUTTONS]int) [N_FLOORS][N_BUTTONS]
 
 				floor_dif = n - prev_floor
 
-				if dir == DIR_UP {
+				if elev_dir == DIR_UP {
 
 					if floor_dif > 0 {
 
-						cost_matrix[n][i] = cost_matrix[n][i] + (Abs_val(floor_dif) * COST_PER_FLOOR) + 1
+						cost_matrix[n][i] = (Abs_val(floor_dif) * COST_PER_FLOOR) + 1
 
 					} else if floor_dif < 0 {
 
-						cost_matrix[n][i] = cost_matrix[n][i] + (Abs_val(floor_dif) * COST_PER_FLOOR) + TURN_COST
+						cost_matrix[n][i] = (Abs_val(floor_dif) * COST_PER_FLOOR) + TURN_COST
 
 					}
 
-				} else if dir == DIR_DOWN {
+				} else if elev_dir == DIR_DOWN {
 
 					if floor_dif > 0 {
 
-						cost_matrix[n][i] = cost_matrix[n][i] + (Abs_val(floor_dif) * COST_PER_FLOOR) + TURN_COST
+						cost_matrix[n][i] = (Abs_val(floor_dif) * COST_PER_FLOOR) + TURN_COST
 
 					} else if floor_dif < 0 {
 
-						cost_matrix[n][i] = cost_matrix[n][i] + (Abs_val(floor_dif) * COST_PER_FLOOR) + 1
+						cost_matrix[n][i] = (Abs_val(floor_dif) * COST_PER_FLOOR) + 1
 
 					}
 
 				} else {
 
-					cost_matrix[n][i] = cost_matrix[n][i] + (Abs_val(floor_dif) * COST_PER_FLOOR) + 1
+					cost_matrix[n][i] = (Abs_val(floor_dif) * COST_PER_FLOOR) + 1
 
 				}
 

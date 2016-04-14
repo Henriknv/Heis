@@ -1,0 +1,39 @@
+	// for {
+	// 	Sleep(200*Millisecond)
+	// 	current_floor = <-Floor_sensor_chan
+	// 	if current_floor != -1 {
+	// 		previous_floor = current_floor
+	// 	}
+
+		
+
+	// 	//lock
+	// 	Sort_orders()
+	// 	num_orders := len(Elev_orders)
+	// 	if num_orders > 0 {
+	// 		target_floor = Elev_orders[0]
+	// 	}
+	// 	//unlock
+
+	// 	if target_floor > previous_floor {
+	// 		elev_dir = DIR_UP
+	// 	} else if target_floor < previous_floor {
+	// 		elev_dir = DIR_DOWN
+	// 	}
+
+	// 	Println(Local_order_matrix)
+	// 	Println("cf:", current_floor, " pf:", previous_floor, " tf:", target_floor, " ed:", elev_dir, " no:", num_orders)
+
+	// 	if num_orders > 0 {
+	// 		if target_floor == current_floor {
+	// 			Elev_stop_motor()
+	// 			Elev_open_door()
+	// 			delete_order(0, elev_dir)
+	// 		} else {
+	// 			Elev_set_motor_direction(elev_dir)
+	// 		}
+	// 	} else {
+	// 		Elev_stop_motor()
+	// 	}
+
+	// }
