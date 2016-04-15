@@ -258,23 +258,27 @@ func Get_orders(Slave_output_ch chan MISO) [N_FLOORS][N_BUTTONS]int {
 		Get_external_orders()
 
 		if Local_order_matrix != temp {
-			temp_slave_out.Elev_id = Elev_id
-			temp_slave_out.Local_order_matrix = Local_order_matrix
-
-			temp_slave_out.Local_cost_matrix = Calculate_cost()
-
-			Slave_output_ch <- temp_slave_out
+			
 			//Println("id:  ", temp_slave_out.Elev_id)
 			//Println("Local_order_matrix: ", temp_slave_out.Local_order_matrix)
 			//Println("Local_cost_matrix: ", temp_slave_out.Local_cost_matrix)
 
 			//Write(Local_order_matrix)
 
-			temp = Local_order_matrix
-			Println("Get_orders: ",Local_order_matrix)
+			
 
 		}
-		Sleep(10*Millisecond)
+
+
+		temp_slave_out.Elev_id = Elev_id
+		temp_slave_out.Local_order_matrix = Local_order_matrix
+
+		temp_slave_out.Local_cost_matrix = Calculate_cost()
+
+		Slave_output_ch <- temp_slave_out
+		temp = Local_order_matrix
+		Println("Get_orders: ",Local_order_matrix)
+		Sleep(50*Millisecond)
 	}
 }
 
@@ -549,6 +553,9 @@ func Slave(Slave_input_ch chan MOSI) {
 						}
 					}
 				}
+				Println("Master_cost_matrix: ", Master_cost_matrix)
+				Println("Local_order_matrix: ", Local_order_matrix)
+
 
 				//Println("Second print: ", Master_cost_matrix)
 
