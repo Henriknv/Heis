@@ -66,7 +66,7 @@ func Elevator_init() { // FIX names
 
 	Elev_set_motor_direction(0)
 
-	Local_order_matrix = Read()
+	//Local_order_matrix = Read()
 
 	if Elev_get_floor_sensor_signal() == -1 {
 		Elev_set_motor_direction(-1)
@@ -171,7 +171,7 @@ var Local_order_complete [N_FLOORS][N_BUTTONS]int
 
 func delete_order(order_index int, dir int) {
 
-	//Println(dir)
+	Println(dir)
 
 	if dir == DIR_UP {
 		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
@@ -258,7 +258,7 @@ func Get_orders(Slave_output_ch chan MISO) [N_FLOORS][N_BUTTONS]int {
 		if Local_order_matrix != temp {
 			temp_slave_out.Elev_id = Elev_id
 			temp_slave_out.Local_order_matrix = Local_order_matrix
-			temp_slave_out.Local_cost_matrix = Calculate_cost(Local_order_matrix)
+			temp_slave_out.Local_cost_matrix = Calculate_cost(Ext_orders)
 			temp_slave_out.Local_complete_matrix = Local_order_complete
 			Local_order_complete = [N_FLOORS][N_BUTTONS]int{}
 
@@ -433,6 +433,7 @@ func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI) {
 	var best_cost int
 	var best_elev int
 
+
 	for {
 		temp_in = <-Master_input_ch
 		Println("Master called")
@@ -511,6 +512,7 @@ func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI) {
 
 			Master_output_ch <- temp_out
 			Println(temp_out.Elev_id)
+			Println("En gang")
 
 		}
 	}
@@ -554,5 +556,16 @@ func Slave(Slave_input_ch chan MOSI) {
 				Ext_orders[i][INTERNAL_BUTTONS] = Local_order_matrix[i][INTERNAL_BUTTONS]
 			}
 		}
+	}
+}
+
+func Spam(Master_output_ch chan MOSI){
+	var temp MOSI
+	temp.Elev_id = "000"
+	for{
+
+		Master_output_ch <- temp
+
+		Sleep(500 * Millisecond)		
 	}
 }

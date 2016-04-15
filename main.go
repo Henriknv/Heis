@@ -30,6 +30,7 @@ func main() {
 	if is_master {
 
 		go Master(Master_input_ch, Master_output_ch)
+		go Spam(Master_output_ch)
 
 	}
 
