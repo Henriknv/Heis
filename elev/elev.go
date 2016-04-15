@@ -166,6 +166,7 @@ func Execute_orders() {
 		}
 	}
 }
+var Local_order_complete [N_FLOORS][N_BUTTONS]int
 
 func delete_order(order_index int, dir int) {
 
@@ -174,17 +175,21 @@ func delete_order(order_index int, dir int) {
 	if dir == DIR_UP {
 		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
 		Local_order_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
+		Local_order_complete[Elev_orders[order_index]][EXT_UP_BUTTONS] = 1
 
 	} else if dir == DIR_DOWN {
 
 		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
 		Local_order_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
+		Local_order_complete[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 1
 
 	} else if dir == DIR_IDLE {
 
 		Local_order_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
 		Local_order_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
 		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
+		Local_order_complete[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 1
+		Local_order_complete[Elev_orders[order_index]][EXT_UP_BUTTONS] = 1
 
 	}
 
@@ -248,16 +253,20 @@ func Get_orders(Slave_output_ch chan MISO) [N_FLOORS][N_BUTTONS]int {
 		Get_external_orders()
 
 		if Local_order_matrix != temp {
-
 			temp_slave_out.Elev_id = Elev_id
 			temp_slave_out.Local_order_matrix = Local_order_matrix
 			temp_slave_out.Local_cost_matrix = Calculate_cost(Local_order_matrix)
+			temp_slave_out.Local_complete_matrix = Local_order_complete
+			Local_order_complete = [N_FLOORS][N_BUTTONS]int{}
 
 			Slave_output_ch <- temp_slave_out
+			
 
 			Write(Local_order_matrix)
 
 		}
+
+		
 	}
 }
 
@@ -443,7 +452,7 @@ func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI) {
 
 			if in_list != true {
 
-				prev_online_elev_states = append(prev_online_elev_states, temp_in)
+				//prev_online_elev_states = append(prev_online_elev_states, temp_in)
 				Online_elevators = append(Online_elevators, temp_in)
 				return_matrices = append(return_matrices, temp_matrix)
 
@@ -468,7 +477,7 @@ func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI) {
 
 					for k := 0; k < len(Online_elevators); k++ {
 
-						if Online_elevators[k].Local_order_matrix[i][j] != prev_online_elev_states[k].Local_order_matrix[i][j] && prev_online_elev_states[k].Local_order_matrix[i][j] == 1 {
+						if Online_elevators[k].Local_complete_matrix[i][j] == 1 {
 
 							External_order_matrix[i][j] = 0
 
@@ -516,27 +525,35 @@ func Slave(Slave_input_ch chan MOSI) {
 	var temp_in MOSI
 
 	for {
+		select{
+		case temp_in = <-Slave_input_ch:
+			
+			if temp_in.Elev_id == Elev_id {
 
-		temp_in = <-Slave_input_ch
-		if temp_in.Elev_id == Elev_id {
+				Master_order_matrix = temp_in.Master_order_matrix
+				Ext_orders = temp_in.External_order_matrix
 
-			Master_order_matrix = temp_in.Master_order_matrix
-			Ext_orders = temp_in.External_order_matrix
+				for i := 0; i < N_FLOORS; i++ {
 
-			for i := 0; i < N_FLOORS; i++ {
+					Master_order_matrix[i][INTERNAL_BUTTONS] = Calculate_cost(Local_order_matrix)[i][INTERNAL_BUTTONS]
+					Ext_orders[i][INTERNAL_BUTTONS] = Local_order_matrix[i][INTERNAL_BUTTONS]
 
-				Master_order_matrix[i][INTERNAL_BUTTONS] = Calculate_cost(Local_order_matrix)[i][INTERNAL_BUTTONS]
-				Ext_orders[i][INTERNAL_BUTTONS] = Local_order_matrix[i][INTERNAL_BUTTONS]
+					for j := 0; j < N_BUTTONS-1; j++ {
 
-				for j := 0; j < N_BUTTONS-1; j++ {
+						if Master_order_matrix[i][j] > 0 {
 
-					if Master_order_matrix[i][j] > 0 {
+							Local_order_matrix[i][j] = 1
 
-						Local_order_matrix[i][j] = 1
+						}
 
 					}
-
 				}
+			}
+		default:
+			for i := 0; i < N_FLOORS; i++{
+				Master_order_matrix[i][INTERNAL_BUTTONS] = Calculate_cost(Local_order_matrix)[i][INTERNAL_BUTTONS]
+				Println(Master_order_matrix[i][INTERNAL_BUTTONS])
+				Ext_orders[i][INTERNAL_BUTTONS] = Local_order_matrix[i][INTERNAL_BUTTONS]
 			}
 		}
 	}

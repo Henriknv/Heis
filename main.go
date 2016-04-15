@@ -43,7 +43,7 @@ func main() {
 	for {
 		select {
 		case <-printElevOrders:
-			Println("Elev orders: ", Elev_orders, "\n", "Elev costs: ", Elev_costs)
+			//Println("Elev orders: ", Elev_orders, "\n", "Elev costs: ", Elev_costs)
 		default:
 
 		}
