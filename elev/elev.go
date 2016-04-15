@@ -166,7 +166,6 @@ func Execute_orders() {
 			Elev_stop_motor()
 			Elev_open_door()
 			delete_order(0, elev_dir)
-			//Println("TRACKING: ", "Orders: ", Elev_orders, "		Costs: ", Elev_costs)
 
 			prev_dir = elev_dir
 
@@ -244,40 +243,15 @@ func Get_external_orders() {
 
 }
 
-func Get_orders(Slave_output_ch chan MISO) [N_FLOORS][N_BUTTONS]int {
-
-	var temp [N_FLOORS][N_BUTTONS]int
-	var temp_slave_out MISO
+func Get_orders() [N_FLOORS][N_BUTTONS]int {
 
 	for {
-
-		//temp = Local_order_matrix
 
 		Get_internal_orders()
 		Get_external_orders()
 
-		if Local_order_matrix != temp {
-			
-			//Println("id:  ", temp_slave_out.Elev_id)
-			//Println("Local_order_matrix: ", temp_slave_out.Local_order_matrix)
-			//Println("Local_cost_matrix: ", temp_slave_out.Local_cost_matrix)
+		Sleep(10*Millisecond)
 
-			//Write(Local_order_matrix)
-
-			
-
-		}
-
-
-		temp_slave_out.Elev_id = Elev_id
-		temp_slave_out.Local_order_matrix_two = Local_order_matrix
-
-		temp_slave_out.Local_cost_matrix = Calculate_cost()
-
-		Slave_output_ch <- temp_slave_out
-		temp = Local_order_matrix
-		//Println("Get_orders: ",Local_order_matrix)
-		Sleep(50*Millisecond)
 	}
 }
 
@@ -289,11 +263,7 @@ var old_cost_matrix [N_FLOORS][N_BUTTONS]int
 
 func Sort_orders(copy_cost_matrix [N_FLOORS][N_BUTTONS]int) {
 
-	
-
 	if old_cost_matrix != copy_cost_matrix {
-
-		//Println(copy_cost_matrix)
 
 		for i := 0; i < N_FLOORS; i++ {
 
@@ -517,7 +487,11 @@ func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI) {
 	}
 }
 
-func Slave(Slave_input_ch chan MOSI) {
+func Slave(Slave_input_ch chan MOSI, Slave_output_ch chan MISO) {
+
+	var temp [N_FLOORS][N_BUTTONS]int
+	var temp_slave_out MISO
+	var fuckfuck [N_FLOORS][N_BUTTONS]int
 
 	for {
 
@@ -531,11 +505,13 @@ func Slave(Slave_input_ch chan MOSI) {
 				Master_order_matrix = temp_in.Network_order_matrix
 				//Println("First print: ", Master_cost_matrix)
 
+				fuckfuck = Calculate_cost()
+
 				for i := 0; i < N_FLOORS; i++ {
 					
 					if Local_order_matrix[i][INTERNAL_BUTTONS] == 1{
 					
-						Master_cost_matrix[i][INTERNAL_BUTTONS] = Calculate_cost()[i][INTERNAL_BUTTONS]
+						Master_cost_matrix[i][INTERNAL_BUTTONS] = fuckfuck[i][INTERNAL_BUTTONS]
 					
 					}
 					
@@ -550,16 +526,33 @@ func Slave(Slave_input_ch chan MOSI) {
 						}
 					}
 				}
+
 				Println("Master_cost_matrix: ", Master_cost_matrix)
-				//Println("Local_order_matrix: ", Local_order_matrix)
-
-
-				//Println("Second print: ", Master_cost_matrix)
 
 			}
+
+		case <-After(10 * Millisecond):
+
+			if Local_order_matrix != temp {
+
+			//Write(Local_order_matrix)
+
+			}
+
+			temp_slave_out.Elev_id = Elev_id
+			temp_slave_out.Local_order_matrix_two = Local_order_matrix
+			temp_slave_out.Local_cost_matrix = Calculate_cost()
+
+			Slave_output_ch <- temp_slave_out
+			temp = Local_order_matrix
+
 		}
 	}
 }
+
+
+
+
 
 func Spam(Master_output_ch chan MOSI){
 	var temp MOSI

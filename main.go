@@ -21,6 +21,11 @@ func main() {
 	Udp_init(local_listen_port, broadcast_listen_port, Slave_output_ch, Slave_input_ch, Master_input_ch, Master_output_ch)
 	Elevator_init()
 
+	go Elev_maintenance()
+	go Get_orders()
+	go Execute_orders()
+	go Elev_lights()
+
 	is_master := Master_or_slave(Slave_input_ch)
 
 	Println(is_master)
@@ -29,14 +34,10 @@ func main() {
 
 		go Master(Master_input_ch, Master_output_ch)
 		go Spam(Master_output_ch)
+
 	}
 
-	go Slave(Slave_input_ch)
-
-	go Elev_maintenance()
-	go Get_orders(Slave_output_ch)
-	go Execute_orders()
-	go Elev_lights()
+	go Slave(Slave_input_ch, Slave_output_ch)
 
 	for {
 
