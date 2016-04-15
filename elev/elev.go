@@ -521,7 +521,7 @@ func Slave(Slave_input_ch chan MOSI, Slave_output_ch chan MISO) {
 
 						if Master_cost_matrix[i][j] > 0 {
 
-							Local_order_matrix[i][j] = 1
+							Local_order_matrix[i][j] = 0
 
 						}
 					}
