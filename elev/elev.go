@@ -198,6 +198,8 @@ func delete_order(order_index int, dir int) {
 
 		Local_order_matrix[Elev_orders[order_index]][EXT_UP_BUTTONS] = 0
 		Local_order_matrix[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 0
+		Local_order_complete[Elev_orders[order_index]][EXT_DOWN_BUTTONS] = 1
+		Local_order_complete[Elev_orders[order_index]][EXT_UP_BUTTONS] = 1
 
 	}
 
@@ -432,90 +434,84 @@ func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI) {
 	var best_elev int
 
 	for {
-		select {
-		case temp_in = <-Master_input_ch:
-			Println("Master called")
+		temp_in = <-Master_input_ch
+		Println("Master called")
 
-			var temp_matrix Matrices
+		var temp_matrix Matrices
 
-			for i := 0; i < len(Online_elevators); i++ {
+		for i := 0; i < len(Online_elevators); i++ {
 
-				in_list = false
+			in_list = false
 
-				if Online_elevators[i].Elev_id == temp_in.Elev_id {
+			if Online_elevators[i].Elev_id == temp_in.Elev_id {
 
-					in_list = true
-					//prev_online_elev_states[i] = Online_elevators[i]
-					Online_elevators[i] = temp_in
+				in_list = true
+				//prev_online_elev_states[i] = Online_elevators[i]
+				Online_elevators[i] = temp_in
 
+			}
+		}
+
+		if in_list != true {
+
+			//prev_online_elev_states = append(prev_online_elev_states, temp_in)
+			Online_elevators = append(Online_elevators, temp_in)
+			return_matrices = append(return_matrices, temp_matrix)
+
+		}
+
+		for i := 0; i < N_FLOORS; i++ {
+
+			for j := 0; j < N_BUTTONS; j++ {
+
+				//Setting an element in External_order_matrix.
+
+				for k := 0; k < len(Online_elevators); k++ {
+
+					if Online_elevators[k].Local_order_matrix[i][j] == 1 {
+
+						External_order_matrix[i][j] = 1
+
+					}
 				}
-			}
 
-			if in_list != true {
+				//Detecting a change in External_order_matrix.
 
-				//prev_online_elev_states = append(prev_online_elev_states, temp_in)
-				Online_elevators = append(Online_elevators, temp_in)
-				return_matrices = append(return_matrices, temp_matrix)
+				for k := 0; k < len(Online_elevators); k++ {
 
-			}
+					if Online_elevators[k].Local_complete_matrix[i][j] == 1 {
 
-			for i := 0; i < N_FLOORS; i++ {
+						External_order_matrix[i][j] = 0
 
-				for j := 0; j < N_BUTTONS; j++ {
-
-					//Setting an element in External_order_matrix.
-
-					for k := 0; k < len(Online_elevators); k++ {
-
-						if Online_elevators[k].Local_order_matrix[i][j] == 1 {
-
-							External_order_matrix[i][j] = 1
-
-						}
 					}
-
-					//Detecting a change in External_order_matrix.
-
-					for k := 0; k < len(Online_elevators); k++ {
-
-						if Online_elevators[k].Local_complete_matrix[i][j] == 1 {
-
-							External_order_matrix[i][j] = 0
-
-						}
-					}
-
-					//Setting the order of lowest cost to correct online elevator. NB: Internal orders handled locally.
-
-					best_cost = N_FLOORS * N_BUTTONS * 10
-
-					for k := 0; k < len(Online_elevators); k++ {
-
-						if Online_elevators[k].Local_cost_matrix[i][j] < best_cost {
-							best_cost = Online_elevators[k].Local_cost_matrix[i][j]
-							best_elev = k
-						}
-					}
-
-					return_matrices[best_elev].Matrix[i][j] = best_cost
-
 				}
+
+				//Setting the order of lowest cost to correct online elevator. NB: Internal orders handled locally.
+
+				best_cost = N_FLOORS * N_BUTTONS * 10
+
+				for k := 0; k < len(Online_elevators); k++ {
+
+					if Online_elevators[k].Local_cost_matrix[i][j] < best_cost {
+						best_cost = Online_elevators[k].Local_cost_matrix[i][j]
+						best_elev = k
+					}
+				}
+
+				return_matrices[best_elev].Matrix[i][j] = best_cost
+
 			}
+		}
 
-			for k := 0; k < len(Online_elevators); k++ {
+		for k := 0; k < len(Online_elevators); k++ {
 
-				temp_out.Elev_id = Online_elevators[k].Elev_id
-				temp_out.External_order_matrix = External_order_matrix
-				temp_out.Master_order_matrix = return_matrices[k].Matrix
-
-				Master_output_ch <- temp_out
-				Println(temp_out.Elev_id)
-
-			}
-		default:
-			temp_out.Elev_id = "000"
+			temp_out.Elev_id = Online_elevators[k].Elev_id
+			temp_out.External_order_matrix = External_order_matrix
+			temp_out.Master_order_matrix = return_matrices[k].Matrix
 
 			Master_output_ch <- temp_out
+			Println(temp_out.Elev_id)
+
 		}
 	}
 }
