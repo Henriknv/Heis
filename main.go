@@ -3,7 +3,8 @@ package main
 import . "./network"
 import . "./elev"
 import . "fmt"
-import ."time"
+import . "time"
+
 //import ."./driver"
 //import ."./fileio"
 
@@ -39,19 +40,13 @@ func main() {
 
 	printElevOrders := Tick(100 * Millisecond)
 
-	//Slave_output_ch <- MISO{}
-	//Master_output_ch <- MOSI{}
-
 	for {
 		select {
 		case <-printElevOrders:
 			Println("Elev orders: ", Elev_orders, "\n", "Elev costs: ", Elev_costs)
-		case msg := <-Master_input_ch:
-			Println("Master input:", msg)
-		case msg := <-Slave_input_ch:
-			Println("Slave input:", msg)
-		}
+		default:
 
+		}
 
 	}
 }

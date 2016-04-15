@@ -21,15 +21,15 @@ var local_listen_port int
 // Struct and channels for send/receive functions.
 
 type MISO struct {
-	Elev_id string
+	Elev_id            string
 	Local_order_matrix [N_FLOORS][N_BUTTONS]int
-	Local_cost_matrix [N_FLOORS][N_BUTTONS]int
+	Local_cost_matrix  [N_FLOORS][N_BUTTONS]int
 }
 
 type MOSI struct {
-	Elev_id string
+	Elev_id               string
 	External_order_matrix [N_FLOORS][N_BUTTONS]int
-	Master_order_matrix [N_FLOORS][N_BUTTONS]int
+	Master_order_matrix   [N_FLOORS][N_BUTTONS]int
 }
 
 // Functions for aquiring broadcast and local addresses:
@@ -72,7 +72,7 @@ func get_local_addr(local_listen_port int) (err error) {
 
 // Functions to send/receive a message via UDP:
 
-func Udp_send(mosiCh <-chan MOSI, misoCh <-chan MISO){
+func Udp_send(mosiCh <-chan MOSI, misoCh <-chan MISO) {
 
 	conn, _ := net.DialUDP("udp", Local_addr, Broadcast_addr)
 
@@ -80,15 +80,15 @@ func Udp_send(mosiCh <-chan MOSI, misoCh <-chan MISO){
 		select {
 		case miso := <-misoCh:
 			buf, _ := Marshal(miso)
-			conn.Write([]byte( "MISO"+string(buf) ))
+			conn.Write([]byte("MISO" + string(buf)))
 		case mosi := <-mosiCh:
 			buf, _ := Marshal(mosi)
-			conn.Write([]byte( "MOSI"+string(buf) ))
+			conn.Write([]byte("MOSI" + string(buf)))
 		}
 	}
 }
 
-func Udp_receive(mosiCh chan<- MOSI, misoCh chan<- MISO){
+func Udp_receive(mosiCh chan<- MOSI, misoCh chan<- MISO) {
 
 	conn, _ := net.ListenUDP("udp", Broadcast_addr)
 	buf := make([]byte, 1024)
@@ -106,7 +106,6 @@ func Udp_receive(mosiCh chan<- MOSI, misoCh chan<- MISO){
 		}
 	}
 }
-
 
 func Udp_init(local_listen_port int, broadcast_listen_port int, Slave_send_ch chan MISO, Slave_receive_ch chan MOSI, Master_receive chan MISO, Master_send chan MOSI) {
 

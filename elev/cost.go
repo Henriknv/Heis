@@ -51,7 +51,7 @@ func Calculate_cost(order_matrix [N_FLOORS][N_BUTTONS]int) [N_FLOORS][N_BUTTONS]
 				floor_dif = n - prev_floor
 
 				if elev_dir == DIR_UP {
-					
+
 					if floor_dif > 0 {
 
 						cost_matrix[n][i] = (Abs_val(floor_dif) * COST_PER_FLOOR) + 1
@@ -63,7 +63,7 @@ func Calculate_cost(order_matrix [N_FLOORS][N_BUTTONS]int) [N_FLOORS][N_BUTTONS]
 					}
 
 				} else if elev_dir == DIR_DOWN {
-					
+
 					if floor_dif > 0 {
 
 						cost_matrix[n][i] = (Abs_val(floor_dif) * COST_PER_FLOOR) + TURN_COST
@@ -75,7 +75,7 @@ func Calculate_cost(order_matrix [N_FLOORS][N_BUTTONS]int) [N_FLOORS][N_BUTTONS]
 					}
 
 				} else {
-					
+
 					cost_matrix[n][i] = (Abs_val(floor_dif) * COST_PER_FLOOR) + 1
 
 				}
