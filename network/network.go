@@ -24,13 +24,12 @@ type MISO struct {
 	Elev_id               string
 	Local_order_matrix    [N_FLOORS][N_BUTTONS]int
 	Local_cost_matrix     [N_FLOORS][N_BUTTONS]int
-	Local_complete_matrix [N_FLOORS][N_BUTTONS]int
 }
 
 type MOSI struct {
 	Elev_id               string
-	External_order_matrix [N_FLOORS][N_BUTTONS]int
-	Master_order_matrix   [N_FLOORS][N_BUTTONS]int
+	Network_order_matrix [N_FLOORS][N_BUTTONS]int
+	Master_cost_matrix   [N_FLOORS][N_BUTTONS]int
 }
 
 // Functions for aquiring broadcast and local addresses:
@@ -80,13 +79,16 @@ func Udp_send(mosiCh <-chan MOSI, misoCh <-chan MISO) {
 	for {
 		select {
 		case miso := <-misoCh:
+
 			buf, _ := Marshal(miso)
-			Println("UDP Send Called")
+			//Println("UDP MISO Send Called")
 			conn.Write([]byte("MISO" + string(buf)))
 		case mosi := <-mosiCh:
 			buf, _ := Marshal(mosi)
+			//Println("UDP MOSI Send Called")
 			conn.Write([]byte("MOSI" + string(buf)))
 		}
+		//Println("UDP Send Called")
 	}
 }
 

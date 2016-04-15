@@ -37,16 +37,3 @@
 	// 	}
 
 	// }
-
-
-
-
-
-s := make(map[string]*[2][2]int)
-
-	s["one"] = &[2][2]int{{1,2},{3,4}}
-	fmt.Println(s)
-	s["one"][0][0] = 7
-	fmt.Println(s["one"])
-
-
