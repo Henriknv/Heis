@@ -21,9 +21,9 @@ var local_listen_port int
 // Struct and channels for send/receive functions.
 
 type MISO struct {
-	Elev_id            string
-	Local_order_matrix [N_FLOORS][N_BUTTONS]int
-	Local_cost_matrix  [N_FLOORS][N_BUTTONS]int
+	Elev_id               string
+	Local_order_matrix    [N_FLOORS][N_BUTTONS]int
+	Local_cost_matrix     [N_FLOORS][N_BUTTONS]int
 	Local_complete_matrix [N_FLOORS][N_BUTTONS]int
 }
 
@@ -81,6 +81,7 @@ func Udp_send(mosiCh <-chan MOSI, misoCh <-chan MISO) {
 		select {
 		case miso := <-misoCh:
 			buf, _ := Marshal(miso)
+			Println("UDP Send Called")
 			conn.Write([]byte("MISO" + string(buf)))
 		case mosi := <-mosiCh:
 			buf, _ := Marshal(mosi)

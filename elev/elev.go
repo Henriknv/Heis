@@ -166,11 +166,12 @@ func Execute_orders() {
 		}
 	}
 }
+
 var Local_order_complete [N_FLOORS][N_BUTTONS]int
 
 func delete_order(order_index int, dir int) {
 
-	Println(dir)
+	//Println(dir)
 
 	if dir == DIR_UP {
 		Local_order_matrix[Elev_orders[order_index]][INTERNAL_BUTTONS] = 0
@@ -260,13 +261,12 @@ func Get_orders(Slave_output_ch chan MISO) [N_FLOORS][N_BUTTONS]int {
 			Local_order_complete = [N_FLOORS][N_BUTTONS]int{}
 
 			Slave_output_ch <- temp_slave_out
-			
+			Println("Got orders")
 
 			Write(Local_order_matrix)
 
 		}
 
-		
 	}
 }
 
@@ -424,7 +424,7 @@ func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI) {
 
 	var temp_in MISO
 	var temp_out MOSI
-	var prev_online_elev_states []MISO
+	//var prev_online_elev_states []MISO
 	var Online_elevators []MISO
 	var in_list bool
 	var return_matrices []Matrices
@@ -434,6 +434,7 @@ func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI) {
 	for {
 		select {
 		case temp_in = <-Master_input_ch:
+			Println("Master called")
 
 			var temp_matrix Matrices
 
@@ -444,7 +445,7 @@ func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI) {
 				if Online_elevators[i].Elev_id == temp_in.Elev_id {
 
 					in_list = true
-					prev_online_elev_states[i] = Online_elevators[i]
+					//prev_online_elev_states[i] = Online_elevators[i]
 					Online_elevators[i] = temp_in
 
 				}
@@ -508,11 +509,12 @@ func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI) {
 				temp_out.Master_order_matrix = return_matrices[k].Matrix
 
 				Master_output_ch <- temp_out
+				Println(temp_out.Elev_id)
 
 			}
 		default:
 			temp_out.Elev_id = "000"
-			Println(temp_out)
+
 			Master_output_ch <- temp_out
 		}
 	}
@@ -525,9 +527,9 @@ func Slave(Slave_input_ch chan MOSI) {
 	var temp_in MOSI
 
 	for {
-		select{
+		select {
 		case temp_in = <-Slave_input_ch:
-			
+
 			if temp_in.Elev_id == Elev_id {
 
 				Master_order_matrix = temp_in.Master_order_matrix
@@ -550,9 +552,9 @@ func Slave(Slave_input_ch chan MOSI) {
 				}
 			}
 		default:
-			for i := 0; i < N_FLOORS; i++{
+			for i := 0; i < N_FLOORS; i++ {
 				Master_order_matrix[i][INTERNAL_BUTTONS] = Calculate_cost(Local_order_matrix)[i][INTERNAL_BUTTONS]
-				Println(Master_order_matrix[i][INTERNAL_BUTTONS])
+				//Println(Master_order_matrix[i][INTERNAL_BUTTONS])
 				Ext_orders[i][INTERNAL_BUTTONS] = Local_order_matrix[i][INTERNAL_BUTTONS]
 			}
 		}
