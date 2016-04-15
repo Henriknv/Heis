@@ -105,7 +105,7 @@ var prev_floor int
 
 var cost_matrix [N_FLOORS][N_BUTTONS]int
 
-func Calculate_cost(order_matrix [N_FLOORS][N_BUTTONS]int) [N_FLOORS][N_BUTTONS]int {
+func Calculate_cost() [N_FLOORS][N_BUTTONS]int {
 
 	current_floor = <-Floor_sensor_chan
 

@@ -56,7 +56,7 @@ func Master_or_slave(Slave_input_ch <-chan MOSI) bool {
 
 	}
 
-	Println(Network_order_matrix, "\n", Master_cost_matrix)
+	//Println(Network_order_matrix, "\n", Master_cost_matrix)
 
 	return is_master
 }
@@ -105,7 +105,7 @@ func Elev_maintenance() {
 
 		}
 
-		Sleep(100*Millisecond)
+		Sleep(10*Millisecond)
 	}
 }
 
@@ -167,11 +167,13 @@ func Execute_orders() {
 			Elev_stop_motor()
 			Elev_open_door()
 			delete_order(0, elev_dir)
+			//Println("TRACKING: ", "Orders: ", Elev_orders, "		Costs: ", Elev_costs)
+
 			prev_dir = elev_dir
 
 		}
 
-		Sleep(500*Millisecond)
+		Sleep(10*Millisecond)
 	}
 }
 
@@ -259,7 +261,7 @@ func Get_orders(Slave_output_ch chan MISO) [N_FLOORS][N_BUTTONS]int {
 			temp_slave_out.Elev_id = Elev_id
 			temp_slave_out.Local_order_matrix = Local_order_matrix
 
-			temp_slave_out.Local_cost_matrix = Calculate_cost(Local_order_matrix)
+			temp_slave_out.Local_cost_matrix = Calculate_cost()
 
 			Slave_output_ch <- temp_slave_out
 			//Println("id:  ", temp_slave_out.Elev_id)
@@ -269,9 +271,10 @@ func Get_orders(Slave_output_ch chan MISO) [N_FLOORS][N_BUTTONS]int {
 			//Write(Local_order_matrix)
 
 			temp = Local_order_matrix
+			Println("Get_orders: ",Local_order_matrix)
 
 		}
-		Sleep(100*Millisecond)
+		Sleep(10*Millisecond)
 	}
 }
 
@@ -287,7 +290,7 @@ func Sort_orders(copy_cost_matrix [N_FLOORS][N_BUTTONS]int) {
 
 	if old_cost_matrix != copy_cost_matrix {
 
-		Println(copy_cost_matrix)
+		//Println(copy_cost_matrix)
 
 		for i := 0; i < N_FLOORS; i++ {
 
@@ -313,7 +316,7 @@ func Sort_orders(copy_cost_matrix [N_FLOORS][N_BUTTONS]int) {
 						}
 
 						if sorting_bool == true {
-							Println("Legger til liste")
+						
 							Elev_orders = append(Elev_orders, i)
 							Elev_costs = append(Elev_costs, copy_cost_matrix[i][j])
 
@@ -481,19 +484,12 @@ func Master(Master_input_ch chan MISO, Master_output_ch chan MOSI) {
 
 						if Online_elevators[Elevator].Local_cost_matrix[i][j] < lowest_cost && Network_order_matrix[i][j] == 1 {
 
-							// temp_cost_matrix = Online_elevators[Elevator].Local_cost_matrix
-							// lowest_cost = temp_cost_matrix[i][j] 
-							// Slave_order_matrices[Elevator] = temp_cost_matrix
 							lowest_cost = Online_elevators[Elevator].Local_cost_matrix[i][j]
 							Slave_order_matrices[Elevator][i][j] = lowest_cost
 							
 							if !first_order{
 
 								Slave_order_matrices[lowest_elev_id][i][j] = 0
-
-								// temp_cost_matrix = Online_elevators[lowest_elev_id].Local_cost_matrix
-								// temp_cost_matrix[i][j] = 0
-								// Slave_order_matrices[lowest_elev_id] = temp_cost_matrix
 							
 							}
 
@@ -532,13 +528,13 @@ func Slave(Slave_input_ch chan MOSI) {
 
 				Master_cost_matrix = temp_in.Master_cost_matrix
 				Master_order_matrix = temp_in.Network_order_matrix
-				Println("First print: ", Master_cost_matrix)
+				//Println("First print: ", Master_cost_matrix)
 
 				for i := 0; i < N_FLOORS; i++ {
 					
 					if Local_order_matrix[i][INTERNAL_BUTTONS] == 1{
 					
-						Master_cost_matrix[i][INTERNAL_BUTTONS] = Calculate_cost(Local_order_matrix)[i][INTERNAL_BUTTONS]
+						Master_cost_matrix[i][INTERNAL_BUTTONS] = Calculate_cost()[i][INTERNAL_BUTTONS]
 					
 					}
 					
@@ -554,7 +550,7 @@ func Slave(Slave_input_ch chan MOSI) {
 					}
 				}
 
-				Println("Second print: ", Master_cost_matrix)
+				//Println("Second print: ", Master_cost_matrix)
 
 			}
 		
