@@ -22,7 +22,7 @@ var local_listen_port int
 
 type MISO struct {
 	Elev_id               string
-	Local_order_matrix    [N_FLOORS][N_BUTTONS]int
+	Local_order_matrix_two    [N_FLOORS][N_BUTTONS]int
 	Local_cost_matrix     [N_FLOORS][N_BUTTONS]int
 }
 
